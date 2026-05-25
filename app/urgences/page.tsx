@@ -1,88 +1,182 @@
 // @ts-nocheck
+'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Phone, ArrowLeft, AlertTriangle, Heart, Flame, Shield } from 'lucide-react'
+import Navbar from '@/components/Navbar'
+import { supabase } from '@/lib/supabase'
 
-const urgences = [
-  { name: 'SAMU', number: '15', category: 'medical', icon: Heart, color: '#dc2626', bg: '#fee2e2', desc: 'Service d\'Aide Médicale Urgente — Urgences médicales' },
-  { name: 'Sapeurs-Pompiers', number: '18', category: 'fire', icon: Flame, color: '#ea580c', bg: '#ffedd5', desc: 'Pompiers et secours — Incendies et accidents' },
-  { name: 'Police Nationale', number: '17', category: 'police', icon: Shield, color: '#1d4ed8', bg: '#dbeafe', desc: 'Police nationale du Cameroun' },
-  { name: 'Gendarmerie Nationale', number: '113', category: 'police', icon: Shield, color: '#1d4ed8', bg: '#dbeafe', desc: 'Gendarmerie — Zones rurales et semi-urbaines' },
-  { name: 'Hôpital Central de Yaoundé', number: '+237 222 23 40 27', category: 'hospital', icon: Heart, color: '#059669', bg: '#d1fae5', desc: 'Principal hôpital de la capitale' },
-  { name: 'CHU de Yaoundé', number: '+237 222 31 36 94', category: 'hospital', icon: Heart, color: '#059669', bg: '#d1fae5', desc: 'Centre Hospitalier Universitaire de Yaoundé' },
-  { name: 'Hôpital Général de Douala', number: '+237 233 42 77 77', category: 'hospital', icon: Heart, color: '#059669', bg: '#d1fae5', desc: 'Principal hôpital économique' },
-  { name: 'Croix-Rouge Cameroun', number: '+237 222 22 05 57', category: 'ngo', icon: Heart, color: '#dc2626', bg: '#fee2e2', desc: 'Aide humanitaire d\'urgence' },
-  { name: 'Anti-Poison', number: '+237 222 23 40 27', category: 'medical', icon: AlertTriangle, color: '#d97706', bg: '#fef3c7', desc: 'Intoxications et empoisonnements' },
-  { name: 'Urgences Pédiatriques', number: '+237 222 20 09 35', category: 'medical', icon: Heart, color: '#dc2626', bg: '#fee2e2', desc: 'Urgences pour enfants' },
-]
+const CATEGORIES = {
+  medical:    { label: 'Urgences Médicales', icon: '🚑', color: '#dc2626' },
+  fire:       { label: 'Sapeurs-Pompiers',    icon: '🚒', color: '#ea580c' },
+  police:     { label: 'Police / Sécurité',   icon: '🚔', color: '#2563eb' },
+  gendarmerie:{ label: 'Gendarmerie',         icon: '⚖️',  color: '#4f46e5' },
+  universal:  { label: 'Numéro Universel',    icon: '📞', color: '#0d4a3a' },
+  humanitarian:{ label: 'Aide Humanitaire',  icon: '❤️',  color: '#db2777' },
+  road:       { label: 'Sécurité Routière',   icon: '🛣️',  color: '#ca8a04' },
+  health_info:{ label: 'Info Santé',          icon: '💬', color: '#0891b2' },
+  epidemic:   { label: 'Épidémies',           icon: '🦠',  color: '#7c3aed' },
+  poison:     { label: 'Anti-Poison',         icon: '☠️',  color: '#374151' },
+  violence:   { label: 'Aide aux Victimes',   icon: '🛡️',  color: '#be123c' },
+}
+
+const CITIES = ['Toutes les villes', 'Nationale', 'Yaoundé', 'Douala', 'Bafoussam', 'Bamenda', 'Garoua', 'Maroua', 'Bertoua', 'Buea', 'Ebolowa', 'Ngaoundéré', 'Limbé']
 
 export default function UrgencesPage() {
+  const [numbers, setNumbers] = useState([])
+  const [city, setCity] = useState('Toutes les villes')
+  const [cat, setCat] = useState('all')
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    supabase.from('emergency_contacts').select('*').order('is_national', { ascending: false }).then(({ data }) => {
+      if (data) setNumbers(data)
+    })
+  }, [])
+
+  const filtered = numbers.filter(n => {
+    const matchCity = city === 'Toutes les villes' ||
+      (city === 'Nationale' && n.is_national) ||
+      (!n.is_national && n.city === city)
+    const matchCat = cat === 'all' || n.category === cat
+    const matchSearch = !search || n.name.toLowerCase().includes(search.toLowerCase()) || n.number.includes(search)
+    return matchCity && matchCat && matchSearch
+  })
+
+  const nationals = filtered.filter(n => n.is_national)
+  const locals = filtered.filter(n => !n.is_national)
+
   return (
-    <div className="min-h-screen" style={{background: 'var(--bg-cream)'}}>
-      <div className="sticky top-0 z-50 py-4 px-4" style={{background: '#dc2626'}}>
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-white font-semibold">
-            <ArrowLeft size={20} /> Retour
-          </Link>
-          <div className="flex items-center gap-2 text-white font-bold text-lg">
-            <AlertTriangle size={20} /> Numéros d'Urgence
-          </div>
-          <div className="w-20" />
+    <div style={{ minHeight: '100vh', background: '#f5f5f0' }}>
+      <Navbar />
+      {/* Hero rouge urgence */}
+      <div style={{ background: 'linear-gradient(135deg,#dc2626,#7f1d1d)', padding: '48px 20px 60px', textAlign: 'center' }}>
+        <div style={{ fontSize: 56, marginBottom: 12 }}>🚨</div>
+        <h1 style={{ color: 'white', fontSize: 32, fontFamily: 'Georgia,serif', fontWeight: 700, margin: '0 0 8px' }}>
+          Numéros d&apos;Urgence
+        </h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, margin: '0 0 24px' }}>
+          Cameroun — Disponibles 24h/24 · 7j/7
+        </p>
+        {/* Boutons numéros critiques */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', maxWidth: 500, margin: '0 auto' }}>
+          {[
+            { num: '15', label: 'SAMU', icon: '🚑' },
+            { num: '18', label: 'Pompiers', icon: '🚒' },
+            { num: '17', label: 'Police', icon: '🚔' },
+            { num: '1730', label: 'Gendarmerie', icon: '⚖️' },
+            { num: '112', label: 'Urgences', icon: '📞' },
+            { num: '1510', label: 'Info Santé', icon: '💬' },
+          ].map(e => (
+            <a key={e.num} href={`tel:${e.num}`} style={{
+              background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)',
+              border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: 16,
+              padding: '12px 16px', textDecoration: 'none', textAlign: 'center', minWidth: 80,
+            }}>
+              <div style={{ fontSize: 20 }}>{e.icon}</div>
+              <div style={{ color: 'white', fontWeight: 700, fontSize: 18, lineHeight: 1 }}>{e.num}</div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, marginTop: 2 }}>{e.label}</div>
+            </a>
+          ))}
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="p-6 rounded-2xl mb-8 text-white text-center" style={{background: '#dc2626'}}>
-          <p className="text-2xl font-bold" style={{fontFamily: 'Fraunces, serif'}}>🚨 En cas d'urgence vitale</p>
-          <p className="mt-2 text-white/80">Ces numéros sont disponibles 24h/24 et 7j/7, même sans abonnement</p>
-          <div className="flex justify-center gap-6 mt-4">
-            <a href="tel:15" className="flex flex-col items-center p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.2)'}}>
-              <span className="text-3xl font-bold">15</span>
-              <span className="text-sm">SAMU</span>
-            </a>
-            <a href="tel:18" className="flex flex-col items-center p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.2)'}}>
-              <span className="text-3xl font-bold">18</span>
-              <span className="text-sm">Pompiers</span>
-            </a>
-            <a href="tel:17" className="flex flex-col items-center p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.2)'}}>
-              <span className="text-3xl font-bold">17</span>
-              <span className="text-sm">Police</span>
-            </a>
-            <a href="tel:113" className="flex flex-col items-center p-4 rounded-xl" style={{background: 'rgba(255,255,255,0.2)'}}>
-              <span className="text-3xl font-bold">113</span>
-              <span className="text-sm">Gendarmerie</span>
-            </a>
+      <div style={{ maxWidth: 800, margin: '-20px auto 40px', padding: '0 16px' }}>
+        {/* Filtres */}
+        <div style={{ background: 'white', borderRadius: 20, padding: 20, marginBottom: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+          <input
+            placeholder="🔍 Rechercher un service, numéro..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box', marginBottom: 12, outline: 'none' }}
+          />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+            <select value={city} onChange={e => setCity(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
+              {CITIES.map(c => <option key={c}>{c}</option>)}
+            </select>
+            <select value={cat} onChange={e => setCat(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
+              <option value="all">Toutes catégories</option>
+              {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
+            </select>
           </div>
+          <p style={{ color: '#888', fontSize: 12, margin: 0 }}>{filtered.length} numéro(s) trouvé(s)</p>
         </div>
 
-        <div className="space-y-3">
-          {urgences.map((u, i) => {
-            const Icon = u.icon
-            return (
-              <a key={i} href={`tel:${u.number.replace(/\s/g, '')}`}
-                className="flex items-center gap-4 p-4 rounded-2xl bg-card-hover"
-                style={{background: 'white', border: '1px solid var(--border)', textDecoration: 'none'}}>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{background: u.bg}}>
-                  <Icon size={24} style={{color: u.color}} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm" style={{color: 'var(--text-dark)'}}>{u.name}</p>
-                  <p className="text-xs mt-0.5" style={{color: 'var(--text-muted)'}}>{u.desc}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg" style={{color: u.color}}>{u.number}</span>
-                  <Phone size={18} style={{color: u.color}} />
-                </div>
-              </a>
-            )
-          })}
-        </div>
+        {/* Numéros nationaux */}
+        {nationals.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ color: '#0d4a3a', fontFamily: 'Georgia,serif', fontSize: 18, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              🇨🇲 Numéros Nationaux
+            </h2>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {nationals.map(n => <NumberCard key={n.id} n={n} />)}
+            </div>
+          </div>
+        )}
 
-        <div className="mt-8 p-5 rounded-2xl text-center" style={{background: '#f0fdf4', border: '1px solid #bbf7d0'}}>
-          <p className="text-sm font-medium" style={{color: 'var(--green-deep)'}}>
-            ✅ Ces numéros sont accessibles gratuitement, même sans abonnement Santé Connect
+        {/* Numéros locaux groupés par ville */}
+        {locals.length > 0 && (
+          <div>
+            <h2 style={{ color: '#0d4a3a', fontFamily: 'Georgia,serif', fontSize: 18, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              📍 Numéros Locaux
+            </h2>
+            {CITIES.filter(c => c !== 'Toutes les villes' && c !== 'Nationale').map(c => {
+              const cityNums = locals.filter(n => n.city === c)
+              if (cityNums.length === 0) return null
+              return (
+                <div key={c} style={{ marginBottom: 20 }}>
+                  <h3 style={{ color: '#444', fontSize: 14, fontFamily: 'sans-serif', fontWeight: 700, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                    📍 {c}
+                  </h3>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {cityNums.map(n => <NumberCard key={n.id} n={n} />)}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+            <p>Aucun numéro trouvé pour cette recherche</p>
+          </div>
+        )}
+
+        {/* Avertissement */}
+        <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 16, padding: 20, marginTop: 24, textAlign: 'center' }}>
+          <p style={{ color: '#92400e', fontSize: 13, fontFamily: 'sans-serif', margin: 0, lineHeight: 1.6 }}>
+            ⚠️ <strong>En cas d&apos;urgence vitale</strong>, composez le <strong>15 (SAMU)</strong>, <strong>18 (Pompiers)</strong> ou <strong>112</strong> immédiatement.<br />
+            Ces numéros sont disponibles même sans abonnement actif sur Santé Connect.
           </p>
         </div>
       </div>
+    </div>
+  )
+}
+
+function NumberCard({ n }: { n: any }) {
+  const cat = CATEGORIES[n.category] || { label: n.category, icon: '📞', color: '#666' }
+  return (
+    <div style={{ background: 'white', borderRadius: 16, padding: '16px 20px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 16, border: `1px solid ${cat.color}22` }}>
+      <div style={{ width: 48, height: 48, borderRadius: 14, background: `${cat.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+        {cat.icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, color: '#0d4a3a', fontSize: 14, fontFamily: 'sans-serif' }}>{n.name}</div>
+        <div style={{ color: cat.color, fontWeight: 700, fontSize: 18, fontFamily: 'monospace' }}>{n.number}</div>
+        <div style={{ color: '#888', fontSize: 11, fontFamily: 'sans-serif' }}>
+          {cat.label}{n.city ? ` · ${n.city}` : ' · National'}
+        </div>
+      </div>
+      <a href={`tel:${n.number}`} style={{
+        background: cat.color, color: 'white', borderRadius: 12, padding: '10px 16px',
+        textDecoration: 'none', fontWeight: 700, fontSize: 13, fontFamily: 'sans-serif',
+        display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+      }}>
+        📞 Appeler
+      </a>
     </div>
   )
 }

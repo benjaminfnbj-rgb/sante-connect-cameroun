@@ -32,7 +32,8 @@ export default function Navbar() {
             <Link href="#services" className="text-green-100 hover:text-white font-sans text-sm font-medium transition-colors">Services</Link>
             <Link href="#professionnels" className="text-green-100 hover:text-white font-sans text-sm font-medium transition-colors">Professionnels</Link>
             <Link href="#pharmacies" className="text-green-100 hover:text-white font-sans text-sm font-medium transition-colors">Pharmacies</Link>
-            <Link href="#urgences" className="text-red-300 hover:text-red-200 font-sans text-sm font-bold transition-colors flex items-center gap-1">
+            <Link href="/structures" className="text-green-100 hover:text-white font-sans text-sm font-medium transition-colors">Structures</Link>
+            <Link href="/urgences" className="text-red-300 hover:text-red-200 font-sans text-sm font-bold transition-colors flex items-center gap-1">
               <span>🚨</span> Urgences
             </Link>
             <Link href="#tarifs" className="text-green-100 hover:text-white font-sans text-sm font-medium transition-colors">Tarifs</Link>
@@ -63,7 +64,8 @@ export default function Navbar() {
           <Link href="#services" className="block text-green-100 font-sans py-2">Services</Link>
           <Link href="#professionnels" className="block text-green-100 font-sans py-2">Professionnels</Link>
           <Link href="#pharmacies" className="block text-green-100 font-sans py-2">Pharmacies</Link>
-          <Link href="#urgences" className="block text-red-300 font-bold font-sans py-2">🚨 Urgences</Link>
+          <Link href="/structures" className="block text-green-100 font-sans py-2">🏥 Structures</Link>
+          <Link href="/urgences" className="block text-red-300 font-bold font-sans py-2">🚨 Urgences</Link>
           <Link href="#tarifs" className="block text-green-100 font-sans py-2">Tarifs</Link>
           <div className="pt-3 border-t border-green-700 flex flex-col gap-2">
             <Link href="/auth/login" className="block text-center text-white font-sans py-2 border border-green-500 rounded-full">Connexion</Link>
