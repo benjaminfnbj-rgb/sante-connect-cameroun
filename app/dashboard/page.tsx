@@ -138,7 +138,7 @@ export default function DashboardPage() {
             <Link href="/urgences" className="text-xs font-medium" style={{color: '#dc2626'}}>Voir tous <ChevronRight size={14} className="inline" /></Link>
           </div>
           <div className="grid grid-cols-4 gap-2">
-            {[{n:'15', l:'SAMU'},{n:'18', l:'Pompiers'},{n:'17', l:'Police'},{n:'113', l:'Gendarmerie'}].map((u,i) => (
+            {[{n:'15', l:'SAMU'},{n:'18', l:'Pompiers'},{n:'17', l:'Police'},{n:'1730', l:'Gendarmerie'}].map((u,i) => (
               <a key={i} href={`tel:${u.n}`} className="text-center py-2 rounded-xl" style={{background: 'white'}}>
                 <p className="font-bold text-lg" style={{color: '#dc2626'}}>{u.n}</p>
                 <p className="text-xs" style={{color: 'var(--text-muted)'}}>{u.l}</p>

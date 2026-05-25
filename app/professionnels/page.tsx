@@ -2,121 +2,146 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import { Search, ArrowLeft, Star, MapPin, ThumbsUp, ThumbsDown, Filter } from 'lucide-react'
+import Navbar from '@/components/Navbar'
+import { supabase } from '@/lib/supabase'
+
+const SPECIALTIES = ['Toutes', 'Médecin généraliste', 'Pédiatre', 'Gynécologue', 'Cardiologue', 'Dermatologue', 'Chirurgien', 'Ophtalmologue', 'Dentiste', 'Neurologue', 'Psychiatre', 'Kinésithérapeute', 'Radiologue', 'Urgentiste']
+const CITIES = ['Toutes', 'Yaoundé', 'Douala', 'Bafoussam', 'Bamenda', 'Garoua', 'Maroua', 'Bertoua', 'Buea', 'Ebolowa', 'Ngaoundéré']
+const PRO_TYPES = { professional: '👨‍⚕️ Médecin', pharmacy: '💊 Pharmacie', insurance: '🛡️ Assurance', ngo: '🤝 ONG', structure: '🏥 Structure' }
 
 export default function ProfessionnelsPage() {
-  const [professionals, setProfessionals] = useState<Record<string, string | number | boolean | null>[]>([])
-  const [search, setSearch] = useState('')
+  const [pros, setPros] = useState([])
   const [loading, setLoading] = useState(true)
-  const [specialty, setSpecialty] = useState('')
+  const [search, setSearch] = useState('')
+  const [specialty, setSpecialty] = useState('Toutes')
+  const [city, setCity] = useState('Toutes')
+  const [type, setType] = useState('all')
 
   useEffect(() => {
-    const supabase = createClient()
-    const query = supabase
+    supabase
       .from('professional_profiles')
-      .select(`*, profiles!inner(full_name, avatar_url, city, role)`)
-      .eq('is_public', true)
+      .select('*, profiles(full_name, avatar_url, city, user_type, email)')
       .eq('verification_status', 'verified')
-
-    query.then(({ data }) => { setProfessionals(data || []); setLoading(false) })
+      .eq('is_visible', true)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error(error)
+        setPros(data || [])
+        setLoading(false)
+      })
   }, [])
 
-  const filtered = professionals.filter(p => {
-    const profile = p.profiles as Record<string, string>
-    const name = profile?.full_name?.toLowerCase() || ''
-    const spec = (p.specialty as string)?.toLowerCase() || ''
+  const filtered = pros.filter(p => {
+    const name = p.structure_name || p.profiles?.full_name || ''
+    const spec = p.specialty || ''
+    const proCity = p.city || p.profiles?.city || ''
     const q = search.toLowerCase()
-    return (!search || name.includes(q) || spec.includes(q)) &&
-           (!specialty || spec.includes(specialty.toLowerCase()))
+    return (
+      (!search || name.toLowerCase().includes(q) || spec.toLowerCase().includes(q)) &&
+      (specialty === 'Toutes' || spec.toLowerCase().includes(specialty.toLowerCase())) &&
+      (city === 'Toutes' || proCity.toLowerCase().includes(city.toLowerCase())) &&
+      (type === 'all' || p.structure_type === type || p.profiles?.user_type === type)
+    )
   })
 
   return (
-    <div className="min-h-screen" style={{background: 'var(--bg-cream)'}}>
-      <header className="sticky top-0 z-40 px-4 py-4" style={{background: 'white', borderBottom: '1px solid var(--border)'}}>
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-4">
-            <Link href="/dashboard"><ArrowLeft size={20} style={{color: 'var(--text-muted)'}} /></Link>
-            <span className="font-bold text-lg" style={{fontFamily: 'Fraunces, serif'}}>Professionnels de santé</span>
-          </div>
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color: 'var(--text-muted)'}} />
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Médecin, spécialité, nom..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none text-sm"
-                style={{background: 'var(--bg-cream)', border: '1px solid var(--border)'}} />
-            </div>
+    <div style={{ minHeight: '100vh', background: '#f5f5f0' }}>
+      <Navbar />
+      <div style={{ background: 'linear-gradient(135deg,#0d4a3a,#1a7a5e)', padding: '40px 20px 56px', textAlign: 'center' }}>
+        <div style={{ fontSize: 48, marginBottom: 10 }}>👨‍⚕️</div>
+        <h1 style={{ color: 'white', fontSize: 28, fontFamily: 'Georgia,serif', fontWeight: 700, margin: '0 0 8px' }}>
+          Professionnels de Santé
+        </h1>
+        <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, margin: 0 }}>
+          Médecins, pharmacies, assurances et ONG vérifiés au Cameroun
+        </p>
+      </div>
+
+      <div style={{ maxWidth: 900, margin: '-20px auto 40px', padding: '0 16px' }}>
+        {/* Filtres */}
+        <div style={{ background: 'white', borderRadius: 20, padding: 20, marginBottom: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+          <input placeholder="🔍 Rechercher un médecin, spécialité, structure..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box', marginBottom: 12, outline: 'none' }}
+          />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <select value={specialty} onChange={e => setSpecialty(e.target.value)}
-              className="px-3 py-2.5 rounded-xl text-sm outline-none"
-              style={{background: 'var(--bg-cream)', border: '1px solid var(--border)'}}>
-              <option value="">Toutes spécialités</option>
-              <option>Médecine générale</option>
-              <option>Pédiatrie</option>
-              <option>Gynécologie</option>
-              <option>Dermatologie</option>
-              <option>Cardiologie</option>
-              <option>Ophtalmologie</option>
+              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
+              {SPECIALTIES.map(s => <option key={s}>{s}</option>)}
+            </select>
+            <select value={city} onChange={e => setCity(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
+              {CITIES.map(c => <option key={c}>{c}</option>)}
+            </select>
+            <select value={type} onChange={e => setType(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
+              <option value="all">Tous les types</option>
+              {Object.entries(PRO_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
+          <p style={{ color: '#888', fontSize: 12, margin: '10px 0 0', fontFamily: 'sans-serif' }}>
+            {loading ? 'Chargement...' : `${filtered.length} professionnel(s) trouvé(s)`}
+          </p>
         </div>
-      </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="text-center py-20" style={{color: 'var(--text-muted)'}}>Chargement...</div>
+          <div style={{ textAlign: 'center', padding: 60 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '4px solid #0d4a3a', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+            <p style={{ color: '#888', fontFamily: 'sans-serif' }}>Chargement des professionnels...</p>
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-lg font-medium mb-2" style={{color: 'var(--text-dark)'}}>Aucun professionnel trouvé</p>
-            <p className="text-sm" style={{color: 'var(--text-muted)'}}>Modifiez vos critères de recherche</p>
+          <div style={{ textAlign: 'center', padding: 60, background: 'white', borderRadius: 20 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+            <p style={{ color: '#888', fontFamily: 'sans-serif', marginBottom: 8 }}>Aucun professionnel trouvé</p>
+            <p style={{ color: '#aaa', fontSize: 13, fontFamily: 'sans-serif' }}>
+              Vous êtes professionnel de santé ? <Link href="/auth/register?type=professional" style={{ color: '#0d4a3a', fontWeight: 700 }}>Inscrivez-vous</Link>
+            </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <p className="text-sm" style={{color: 'var(--text-muted)'}}>{filtered.length} professionnel(s) trouvé(s)</p>
-            {filtered.map((pro, i) => {
-              const profile = pro.profiles as Record<string, string>
-              const likes = pro.likes as number || 0
-              const dislikes = pro.dislikes as number || 0
-              const total = likes + dislikes
-              const rating = total > 0 ? Math.round((likes / total) * 100) : null
-              return (
-                <Link key={i} href={`/professionnels/${(pro.user_id as string)}`}
-                  className="block p-5 rounded-2xl bg-card-hover"
-                  style={{background: 'white', border: '1px solid var(--border)', textDecoration: 'none'}}>
-                  <div className="flex gap-4">
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 text-white font-bold text-xl" style={{background: 'var(--green-deep)'}}>
-                      {profile?.full_name?.[0] || 'P'}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-bold" style={{color: 'var(--text-dark)'}}>{profile?.full_name}</p>
-                          <p className="text-sm" style={{color: 'var(--green-mid)'}}>{pro.specialty as string || 'Professionnel de santé'}</p>
-                          <p className="text-xs mt-1" style={{color: 'var(--text-muted)'}}>
-                            <MapPin size={12} className="inline mr-1" />{profile?.city || 'Cameroun'}
-                          </p>
-                        </div>
-                        {rating !== null && (
-                          <div className="text-right">
-                            <div className="flex items-center gap-1 justify-end">
-                              <ThumbsUp size={14} style={{color: 'var(--green-mid)'}} />
-                              <span className="text-sm font-bold" style={{color: 'var(--green-mid)'}}>{rating}%</span>
-                            </div>
-                            <p className="text-xs" style={{color: 'var(--text-muted)'}}>{total} avis</p>
-                          </div>
-                        )}
-                      </div>
-                      {pro.description && (
-                        <p className="text-sm mt-2 line-clamp-2" style={{color: 'var(--text-muted)'}}>{pro.description as string}</p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
+          <div style={{ display: 'grid', gap: 14 }}>
+            {filtered.map(p => <ProCard key={p.id} p={p} />)}
           </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }
+
+function ProCard({ p }) {
+  const name = p.structure_name || p.profiles?.full_name || 'Professionnel'
+  const city = p.city || p.profiles?.city || ''
+  const type = p.profiles?.user_type || 'professional'
+  const typeLabel = PRO_TYPES[type] || '👤 Professionnel'
+
+  return (
+    <Link href={`/professionals/${p.id}`} style={{ textDecoration: 'none' }}>
+      <div style={{ background: 'white', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 14px rgba(0,0,0,0.06)', border: '1px solid #f0f0eb', display: 'flex', gap: 16, alignItems: 'flex-start', cursor: 'pointer' }}>
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: '#e8f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0, overflow: 'hidden' }}>
+          {p.profile_photo ? <img src={p.profile_photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👨‍⚕️'}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+            <span style={{ fontWeight: 700, color: '#0d4a3a', fontSize: 16, fontFamily: 'Georgia,serif' }}>{name}</span>
+            <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>✓ Vérifié</span>
+            {p.is_public_sector && <span style={{ background: '#dbeafe', color: '#1d4ed8', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>🏛️ Public · Gratuit</span>}
+          </div>
+          <div style={{ color: '#2eb87a', fontSize: 13, fontFamily: 'sans-serif', marginBottom: 4 }}>
+            {typeLabel}{p.specialty ? ` · ${p.specialty}` : ''}
+          </div>
+          <div style={{ color: '#888', fontSize: 12, fontFamily: 'sans-serif' }}>
+            📍 {city || 'Cameroun'}
+          </div>
+          {p.description && (
+            <p style={{ color: '#555', fontSize: 13, fontFamily: 'sans-serif', margin: '6px 0 0', lineHeight: 1.5 }}>
+              {p.description.slice(0, 100)}{p.description.length > 100 ? '...' : ''}
+            </p>
+          )}
+        </div>
+        <div style={{ color: '#0d4a3a', fontWeight: 700, fontSize: 12, fontFamily: 'sans-serif', flexShrink: 0, background: '#f0fdf4', borderRadius: 10, padding: '8px 12px' }}>
+          Voir →
+        </div>
+      </div>
+    </Link>
+  )
+}
+

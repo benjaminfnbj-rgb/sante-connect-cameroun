@@ -15,6 +15,15 @@
   --dark: #0a1a14;
   --text-primary: #1a2e26;
   --text-muted: #5a7a6e;
+  --bg-cream: #faf8f3;
+  --border: #e8ede8;
+  --text-dark: #1a2e26;
+  --text-mid: #3d5a4e;
+  --text-light: #7a9a8a;
+  --red-alert: #dc2626;
+  --blue-info: #2563eb;
+  --yellow-accent: #f5a623;
+
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
