@@ -36,7 +36,7 @@ export default function InscriptionPage() {
       email,
       password,
       options: {
-        data: { full_name: fullName, role, phone, gender }
+        data: { full_name: fullName, user_type: role, phone, gender }
       }
     })
     if (error) {

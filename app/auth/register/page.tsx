@@ -15,200 +15,204 @@ function RegisterForm() {
   const [error, setError] = useState('')
   const [form, setForm] = useState({
     email: '', password: '', full_name: '', phone: '',
-    role: defaultType, gender: '', birth_date: '',
-    specialty: '', structure_name: '', city: '',
+    user_type: defaultType, gender: '', city: '',
+    specialty: '', structure_name: '',
     accept_condoms: true,
   })
 
-  const update = (field: string, val: any) => setForm(p => ({ ...p, [field]: val }))
+  const update = (field: string, val: unknown) => setForm(p => ({ ...p, [field]: val }))
 
-  const roles = [
+  const userTypes = [
     { value: 'patient', label: 'Patient', icon: '👤', desc: 'Je cherche des soins de santé' },
     { value: 'professional', label: 'Médecin / Praticien', icon: '👨‍⚕️', desc: 'Je suis professionnel de santé' },
     { value: 'pharmacy', label: 'Pharmacie', icon: '💊', desc: 'Je gère une pharmacie' },
     { value: 'insurance', label: 'Assurance', icon: '🛡️', desc: 'Je propose des assurances santé' },
+    { value: 'ngo', label: 'ONG / Structure', icon: '🏥', desc: 'Organisation de santé' },
   ]
 
   const handleRegister = async () => {
     setLoading(true)
     setError('')
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Créer le compte auth avec les métadonnées correctes
+      const { data, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
         options: {
           data: {
             full_name: form.full_name,
             phone: form.phone,
-            role: form.role,
+            user_type: form.user_type, // champ correct pour le trigger
           }
         }
       })
-      if (error) throw error
+      if (authError) throw authError
+      if (!data.user) throw new Error('Erreur création compte')
 
-      if (data.user) {
-        // Insert profile
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          email: form.email,
-          full_name: form.full_name,
-          phone: form.phone,
-          role: form.role,
-          is_active: true,
-        })
-
-        if (form.role === 'professional') {
-          await supabase.from('professional_profiles').insert({
-            user_id: data.user.id,
-            specialty: form.specialty,
-            structure_name: form.structure_name,
-            city: form.city,
-            is_verified: false,
-          })
+      // 2. Upsert profil avec les colonnes exactes de la BD
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: data.user.id,
+        email: form.email,
+        full_name: form.full_name,
+        phone: form.phone || null,
+        user_type: form.user_type,
+        city: form.city || null,
+        gender: form.gender || null,
+        is_active: true,
+        email_verified: false,
+      })
+      if (profileError) {
+        console.error('Profile error:', profileError)
+        // Ne pas bloquer si le trigger a déjà créé le profil
+        if (!profileError.message.includes('duplicate')) {
+          throw new Error('Database error saving new user: ' + profileError.message)
         }
       }
 
+      // 3. Si professionnel, créer le profil pro
+      if (['professional', 'pharmacy', 'insurance', 'ngo'].includes(form.user_type)) {
+        const structureTypeMap: Record<string, string> = {
+          professional: 'other',
+          pharmacy: 'pharmacy',
+          insurance: 'insurance',
+          ngo: 'ngo',
+        }
+        const { error: proError } = await supabase.from('professional_profiles').insert({
+          user_id: data.user.id,
+          structure_type: structureTypeMap[form.user_type] || 'other',
+          structure_name: form.structure_name || form.full_name,
+          specialty: form.specialty || null,
+          city: form.city || 'Non précisé',
+          verification_status: 'pending',
+          is_visible: false,
+        })
+        if (proError) console.error('Pro profile error (non-blocking):', proError)
+      }
+
       router.push('/auth/verify?email=' + encodeURIComponent(form.email))
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de l\'inscription')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erreur lors de l\'inscription'
+      setError(msg)
     } finally {
       setLoading(false)
     }
   }
 
+  const s = {
+    page: { minHeight: '100vh', background: 'linear-gradient(160deg,#0d4a3a,#1a7a5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } as React.CSSProperties,
+    card: { background: 'white', borderRadius: 24, padding: '40px 32px', width: '100%', maxWidth: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' } as React.CSSProperties,
+    title: { fontSize: 28, fontWeight: 700, color: '#0d4a3a', textAlign: 'center', marginBottom: 6 } as React.CSSProperties,
+    sub: { color: '#888', fontSize: 14, textAlign: 'center', marginBottom: 28 } as React.CSSProperties,
+    label: { display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 14 } as React.CSSProperties,
+    input: { width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 15, outline: 'none', boxSizing: 'border-box' as const, marginBottom: 16 },
+    btn: { width: '100%', padding: '14px', borderRadius: 50, background: 'linear-gradient(135deg,#0d4a3a,#2eb87a)', color: 'white', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', marginTop: 8 } as React.CSSProperties,
+    error: { background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '12px 16px', color: '#dc2626', fontSize: 14, marginBottom: 16 } as React.CSSProperties,
+    typeCard: (selected: boolean) => ({ border: `2px solid ${selected ? '#0d4a3a' : '#e5e7eb'}`, background: selected ? '#f0fdf8' : 'white', borderRadius: 12, padding: '12px 16px', cursor: 'pointer', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }) as React.CSSProperties,
+  }
+
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#0d4a3a,#1a7a5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'white', borderRadius: 24, padding: '40px 48px', width: '100%', maxWidth: 520, boxShadow: '0 40px 80px rgba(0,0,0,0.2)' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ width: 52, height: 52, background: 'linear-gradient(135deg,#1a7a5e,#2eb87a)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 14px' }}>🏥</div>
-          <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 26, fontWeight: 800, color: '#0d4a3a' }}>Créer un compte</h1>
-          <p style={{ color: '#5a7a6e', fontSize: 14, marginTop: 4 }}>1 mois d'essai gratuit • Sans carte bancaire</p>
-        </div>
-
-        {/* Progress */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
-          {[1,2,3].map(s => (
-            <div key={s} style={{ flex: 1, height: 4, borderRadius: 4, background: step >= s ? '#2eb87a' : '#e2e8f0', transition: 'background 0.3s' }} />
-          ))}
-        </div>
-
-        {error && <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#dc2626', padding: '12px 16px', borderRadius: 10, marginBottom: 20, fontSize: 14 }}>{error}</div>}
-
-        {/* Step 1: Role */}
-        {step === 1 && (
-          <div>
-            <h2 style={{ fontWeight: 700, color: '#0d4a3a', marginBottom: 20, fontSize: 18 }}>Vous êtes...</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
-              {roles.map(r => (
-                <div key={r.value} onClick={() => update('role', r.value)}
-                  style={{ padding: 16, borderRadius: 14, border: `2px solid ${form.role === r.value ? '#2eb87a' : '#e2e8f0'}`, background: form.role === r.value ? '#f0fdf8' : 'white', cursor: 'pointer', transition: 'all 0.2s' }}>
-                  <div style={{ fontSize: 28, marginBottom: 6 }}>{r.icon}</div>
-                  <div style={{ fontWeight: 700, color: '#0d4a3a', fontSize: 14 }}>{r.label}</div>
-                  <div style={{ color: '#5a7a6e', fontSize: 12, marginTop: 2 }}>{r.desc}</div>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => setStep(2)} style={{ width: '100%', background: 'linear-gradient(135deg,#1a7a5e,#2eb87a)', color: 'white', padding: '14px', borderRadius: 50, border: 'none', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
-              Continuer →
-            </button>
+    <div style={s.page}>
+      <div style={s.card}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ fontSize: 48, marginBottom: 8 }}>🏥</div>
+          <h1 style={s.title}>Créer un compte</h1>
+          <p style={s.sub}>1 mois d&apos;essai gratuit • Sans carte bancaire</p>
+          {/* Étapes */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 12 }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ width: 60, height: 4, borderRadius: 4, background: i <= step ? '#0d4a3a' : '#e5e7eb' }} />
+            ))}
           </div>
-        )}
+        </div>
 
-        {/* Step 2: Personal info */}
-        {step === 2 && (
-          <div>
-            <h2 style={{ fontWeight: 700, color: '#0d4a3a', marginBottom: 20, fontSize: 18 }}>Informations personnelles</h2>
-            {[
-              { label: 'Nom complet', field: 'full_name', type: 'text', placeholder: 'Jean Dupont' },
-              { label: 'Email', field: 'email', type: 'email', placeholder: 'jean@email.com' },
-              { label: 'Téléphone', field: 'phone', type: 'tel', placeholder: '+237 6XX XXX XXX' },
-              { label: 'Mot de passe', field: 'password', type: 'password', placeholder: '••••••••' },
-            ].map(f => (
-              <div key={f.field} style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', fontSize: 13, marginBottom: 6 }}>{f.label}</label>
-                <input type={f.type} value={(form as any)[f.field]} onChange={e => update(f.field, e.target.value)}
-                  placeholder={f.placeholder} required
-                  style={{ width: '100%', padding: '12px 15px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', fontFamily: 'DM Sans, sans-serif', boxSizing: 'border-box' }} />
+        {error && <div style={s.error}>{error}</div>}
+
+        {step === 1 && (
+          <>
+            <p style={{ fontWeight: 700, color: '#0d4a3a', marginBottom: 12 }}>Je suis...</p>
+            {userTypes.map(t => (
+              <div key={t.value} style={s.typeCard(form.user_type === t.value)} onClick={() => update('user_type', t.value)}>
+                <span style={{ fontSize: 24 }}>{t.icon}</span>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#0d4a3a', fontSize: 14 }}>{t.label}</div>
+                  <div style={{ color: '#888', fontSize: 12 }}>{t.desc}</div>
+                </div>
+                {form.user_type === t.value && <span style={{ marginLeft: 'auto', color: '#0d4a3a' }}>✓</span>}
               </div>
             ))}
-
-            {form.role === 'patient' && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', fontSize: 13, marginBottom: 6 }}>Genre</label>
-                <select value={form.gender} onChange={e => update('gender', e.target.value)}
-                  style={{ width: '100%', padding: '12px 15px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', fontFamily: 'DM Sans, sans-serif', background: 'white', boxSizing: 'border-box' }}>
-                  <option value="">Sélectionner...</option>
-                  <option value="male">Homme</option>
-                  <option value="female">Femme</option>
-                </select>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => setStep(1)} style={{ flex: 1, background: '#f0f0f0', color: '#5a7a6e', padding: '13px', borderRadius: 50, border: 'none', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>← Retour</button>
-              <button onClick={() => setStep(3)} style={{ flex: 2, background: 'linear-gradient(135deg,#1a7a5e,#2eb87a)', color: 'white', padding: '13px', borderRadius: 50, border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Continuer →</button>
-            </div>
-          </div>
+            <button style={s.btn} onClick={() => setStep(2)}>Continuer →</button>
+          </>
         )}
 
-        {/* Step 3: Confirm & extras */}
-        {step === 3 && (
-          <div>
-            <h2 style={{ fontWeight: 700, color: '#0d4a3a', marginBottom: 20, fontSize: 18 }}>Finaliser l'inscription</h2>
+        {step === 2 && (
+          <>
+            <label style={s.label}>Nom complet *</label>
+            <input style={s.input} placeholder="Jean Dupont" value={form.full_name} onChange={e => update('full_name', e.target.value)} />
 
-            {(form.role === 'professional' || form.role === 'pharmacy') && (
+            <label style={s.label}>Email *</label>
+            <input style={s.input} type="email" placeholder="vous@email.com" value={form.email} onChange={e => update('email', e.target.value)} />
+
+            <label style={s.label}>Mot de passe *</label>
+            <input style={s.input} type="password" placeholder="Min. 8 caractères" value={form.password} onChange={e => update('password', e.target.value)} />
+
+            <label style={s.label}>Téléphone</label>
+            <input style={s.input} type="tel" placeholder="+237 6XX XXX XXX" value={form.phone} onChange={e => update('phone', e.target.value)} />
+
+            <label style={s.label}>Ville</label>
+            <input style={s.input} placeholder="Yaoundé, Douala..." value={form.city} onChange={e => update('city', e.target.value)} />
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={{ ...s.btn, background: '#e5e7eb', color: '#333', flex: 1 }} onClick={() => setStep(1)}>← Retour</button>
+              <button style={{ ...s.btn, flex: 2 }} onClick={() => setStep(3)}>Continuer →</button>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            {form.user_type === 'professional' && (
               <>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', fontSize: 13, marginBottom: 6 }}>
-                    {form.role === 'professional' ? 'Spécialité médicale' : 'Nom de la pharmacie'}
-                  </label>
-                  <input type="text" value={form.specialty || form.structure_name}
-                    onChange={e => update(form.role === 'professional' ? 'specialty' : 'structure_name', e.target.value)}
-                    style={{ width: '100%', padding: '12px 15px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', fontFamily: 'DM Sans, sans-serif', boxSizing: 'border-box' }}
-                    placeholder={form.role === 'professional' ? 'Cardiologie, Pédiatrie...' : 'Pharmacie du Centre...'} />
-                </div>
-                <div style={{ background: '#fff8e6', border: '1px solid #f5a623', borderRadius: 12, padding: 16, marginBottom: 20, fontSize: 13, color: '#7a5200' }}>
-                  📋 Vous devrez téléverser vos documents officiels (diplômes, agrément) pour validation KYC après l'inscription.
-                </div>
+                <label style={s.label}>Spécialité médicale</label>
+                <input style={s.input} placeholder="Médecin généraliste, Dentiste..." value={form.specialty} onChange={e => update('specialty', e.target.value)} />
               </>
             )}
-
-            {form.role === 'patient' && (
-              <div style={{ background: '#f0fdf8', borderRadius: 14, padding: 20, marginBottom: 20 }}>
-                <h3 style={{ fontWeight: 700, color: '#0d4a3a', marginBottom: 12, fontSize: 15 }}>🎁 Kit Santé inclus dans votre abonnement</h3>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.accept_condoms} onChange={e => update('accept_condoms', e.target.checked)}
-                    style={{ marginTop: 3, width: 18, height: 18 }} />
-                  <span style={{ color: '#1a2e26', fontSize: 14 }}>
-                    Je souhaite recevoir des <strong>préservatifs gratuits</strong> avec mon abonnement (lutte contre le VIH/MST)
-                  </span>
-                </label>
-                {form.gender === 'female' && (
-                  <div style={{ marginTop: 12, padding: 12, background: '#fff', borderRadius: 10, fontSize: 13, color: '#5a7a6e' }}>
-                    🌸 En tant que femme de moins de 50 ans, vous recevrez également des <strong>serviettes hygiéniques gratuites</strong>.
-                  </div>
-                )}
+            {['pharmacy', 'insurance', 'ngo'].includes(form.user_type) && (
+              <>
+                <label style={s.label}>Nom de la structure</label>
+                <input style={s.input} placeholder="Nom de votre organisation" value={form.structure_name} onChange={e => update('structure_name', e.target.value)} />
+              </>
+            )}
+            {['professional', 'pharmacy', 'insurance', 'ngo'].includes(form.user_type) && (
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 13, color: '#92400e' }}>
+                📋 Vous devrez téléverser vos documents officiels (diplômes, agréments) pour validation après inscription.
               </div>
             )}
-
-            <div style={{ background: '#f8f8f8', borderRadius: 12, padding: 16, marginBottom: 24, fontSize: 13, color: '#5a7a6e' }}>
-              <strong style={{ color: '#0d4a3a' }}>🔒 Confidentialité garantie</strong><br />
-              Vos données médicales restent privées. La plateforme agit uniquement comme intermédiaire de mise en relation.
+            {form.user_type === 'patient' && (
+              <div style={{ background: '#f0fdf8', border: '1px solid #86efac', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={form.accept_condoms} onChange={e => update('accept_condoms', e.target.checked)} />
+                  <span style={{ fontSize: 13, color: '#0d4a3a' }}>
+                    🎁 Inclure les préservatifs dans mon abonnement (kit santé mensuel)
+                  </span>
+                </label>
+              </div>
+            )}
+            <div style={{ background: '#f0fdf8', borderRadius: 12, padding: '14px 16px', marginBottom: 20, fontSize: 13, color: '#0d4a3a' }}>
+              <strong>✅ Récapitulatif :</strong><br />
+              {form.full_name} • {form.email}<br />
+              Type : {userTypes.find(t => t.value === form.user_type)?.label}
             </div>
-
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => setStep(2)} style={{ flex: 1, background: '#f0f0f0', color: '#5a7a6e', padding: '13px', borderRadius: 50, border: 'none', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>← Retour</button>
-              <button onClick={handleRegister} disabled={loading}
-                style={{ flex: 2, background: 'linear-gradient(135deg,#1a7a5e,#2eb87a)', color: 'white', padding: '13px', borderRadius: 50, border: 'none', fontWeight: 700, fontSize: 14, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.8 : 1 }}>
-                {loading ? 'Création...' : '✓ Créer mon compte'}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={{ ...s.btn, background: '#e5e7eb', color: '#333', flex: 1 }} onClick={() => setStep(2)}>← Retour</button>
+              <button style={{ ...s.btn, flex: 2 }} onClick={handleRegister} disabled={loading}>
+                {loading ? '⏳ Création...' : '🚀 Créer mon compte'}
               </button>
             </div>
-          </div>
+          </>
         )}
 
-        <p style={{ textAlign: 'center', marginTop: 24, color: '#5a7a6e', fontSize: 13 }}>
-          Déjà inscrit ? <Link href="/auth/login" style={{ color: '#2eb87a', fontWeight: 600, textDecoration: 'none' }}>Se connecter</Link>
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#888' }}>
+          Déjà un compte ? <Link href="/connexion" style={{ color: '#0d4a3a', fontWeight: 700 }}>Se connecter</Link>
         </p>
       </div>
     </div>
@@ -216,5 +220,9 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
-  return <Suspense><RegisterForm /></Suspense>
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0d4a3a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>Chargement...</div>}>
+      <RegisterForm />
+    </Suspense>
+  )
 }

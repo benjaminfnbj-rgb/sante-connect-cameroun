@@ -29,7 +29,7 @@ export default function RegisterPro() {
     if (authError) { setError(authError.message); setLoading(false); return }
 
     if (data.user) {
-      await supabase.from('professionals').insert({
+      await supabase.from('professional_profiles').insert({
         auth_id: data.user.id,
         email: form.email,
         full_name: form.full_name,
