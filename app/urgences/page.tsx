@@ -1,182 +1,209 @@
 // @ts-nocheck
 'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import Navbar from '@/components/Navbar'
-import { supabase } from '@/lib/supabase'
+import { useState } from 'react'
 
-const CATEGORIES = {
-  medical:    { label: 'Urgences Médicales', icon: '🚑', color: '#dc2626' },
-  fire:       { label: 'Sapeurs-Pompiers',    icon: '🚒', color: '#ea580c' },
-  police:     { label: 'Police / Sécurité',   icon: '🚔', color: '#2563eb' },
-  gendarmerie:{ label: 'Gendarmerie',         icon: '⚖️',  color: '#4f46e5' },
-  universal:  { label: 'Numéro Universel',    icon: '📞', color: '#0d4a3a' },
-  humanitarian:{ label: 'Aide Humanitaire',  icon: '❤️',  color: '#db2777' },
-  road:       { label: 'Sécurité Routière',   icon: '🛣️',  color: '#ca8a04' },
-  health_info:{ label: 'Info Santé',          icon: '💬', color: '#0891b2' },
-  epidemic:   { label: 'Épidémies',           icon: '🦠',  color: '#7c3aed' },
-  poison:     { label: 'Anti-Poison',         icon: '☠️',  color: '#374151' },
-  violence:   { label: 'Aide aux Victimes',   icon: '🛡️',  color: '#be123c' },
-}
+const NATIONALS = [
+  { num: '117', label: 'Police Secours', icon: '🚔', color: '#1d4ed8', desc: 'Agression, vol, trouble à l\'ordre public' },
+  { num: '118', label: 'Sapeurs-Pompiers', icon: '🚒', color: '#dc2626', desc: 'Incendies, accidents graves, noyades, secours à victimes' },
+  { num: '113', label: 'Gendarmerie Nationale', icon: '⚖️', color: '#4f46e5', desc: 'Urgences hors villes, axes routiers, zones rurales' },
+  { num: '112', label: 'Urgence Universelle', icon: '📞', color: '#0d4a3a', desc: 'Accessible depuis tout mobile, même sans carte SIM' },
+  { num: '119', label: 'SAMU / Urgences Médicales', icon: '🚑', color: '#b91c1c', desc: 'Détresses médicales graves, ambulance' },
+  { num: '1510', label: 'Numéro Vert Santé', icon: '💬', color: '#0891b2', desc: 'Signaler maladies suspectes, infos sanitaires, épidémies' },
+]
 
-const CITIES = ['Toutes les villes', 'Nationale', 'Yaoundé', 'Douala', 'Bafoussam', 'Bamenda', 'Garoua', 'Maroua', 'Bertoua', 'Buea', 'Ebolowa', 'Ngaoundéré', 'Limbé']
+const LOCALS = [
+  { city: 'Yaoundé', nums: [
+    { label: 'CHU de Yaoundé — Urgences', num: '+237 222 23 40 40', icon: '🏥' },
+    { label: 'Hôpital Central de Yaoundé', num: '+237 222 22 06 05', icon: '🏥' },
+    { label: 'Hôpital Général de Yaoundé', num: '+237 222 23 28 01', icon: '🏥' },
+    { label: 'Centre Pasteur du Cameroun', num: '+237 222 23 12 22', icon: '🔬' },
+    { label: 'Pompiers Yaoundé', num: '+237 222 22 31 32', icon: '🚒' },
+  ]},
+  { city: 'Douala', nums: [
+    { label: 'SAMU Douala', num: '+237 233 40 32 32', icon: '🚑' },
+    { label: 'Hôpital Général de Douala', num: '+237 233 40 24 42', icon: '🏥' },
+    { label: 'Hôpital Laquintinie', num: '+237 233 42 73 01', icon: '🏥' },
+    { label: 'Pompiers Douala', num: '+237 233 42 37 33', icon: '🚒' },
+  ]},
+  { city: 'Autres villes', nums: [
+    { label: 'Hôpital Régional de Bafoussam', num: '+237 233 44 13 21', icon: '🏥' },
+    { label: 'Hôpital Régional de Bamenda', num: '+237 233 36 11 55', icon: '🏥' },
+    { label: 'Hôpital Régional de Garoua', num: '+237 222 27 12 34', icon: '🏥' },
+    { label: 'Hôpital Régional de Maroua', num: '+237 222 29 22 01', icon: '🏥' },
+    { label: 'Hôpital Régional de Bertoua', num: '+237 222 24 13 32', icon: '🏥' },
+    { label: 'Hôpital Régional de Buea', num: '+237 233 32 25 15', icon: '🏥' },
+    { label: 'Hôpital Régional d\'Ebolowa', num: '+237 222 28 14 06', icon: '🏥' },
+    { label: 'Hôpital Régional de Ngaoundéré', num: '+237 222 25 11 44', icon: '🏥' },
+    { label: 'Croix Rouge Cameroun', num: '+237 222 22 09 71', icon: '❤️' },
+  ]},
+]
+
+const TIPS = [
+  'Gardez votre calme et parlez clairement',
+  'Donnez votre localisation exacte (ville, quartier, carrefour, point de repère)',
+  'Précisez la nature du problème (incendie, accident, malaise, agression)',
+  'Indiquez le nombre de personnes en danger ou blessées',
+  'Ne raccrochez pas avant que l\'opérateur ne vous le demande',
+]
 
 export default function UrgencesPage() {
-  const [numbers, setNumbers] = useState([])
-  const [city, setCity] = useState('Toutes les villes')
-  const [cat, setCat] = useState('all')
-  const [search, setSearch] = useState('')
-
-  useEffect(() => {
-    supabase.from('emergency_contacts').select('*').order('is_national', { ascending: false }).then(({ data }) => {
-      if (data) setNumbers(data)
-    })
-  }, [])
-
-  const filtered = numbers.filter(n => {
-    const matchCity = city === 'Toutes les villes' ||
-      (city === 'Nationale' && n.is_national) ||
-      (!n.is_national && n.city === city)
-    const matchCat = cat === 'all' || n.category === cat
-    const matchSearch = !search || n.name.toLowerCase().includes(search.toLowerCase()) || n.number.includes(search)
-    return matchCity && matchCat && matchSearch
-  })
-
-  const nationals = filtered.filter(n => n.is_national)
-  const locals = filtered.filter(n => !n.is_national)
+  const [tab, setTab] = useState('national')
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f0' }}>
-      <Navbar />
-      {/* Hero rouge urgence */}
-      <div style={{ background: 'linear-gradient(135deg,#dc2626,#7f1d1d)', padding: '48px 20px 60px', textAlign: 'center' }}>
-        <div style={{ fontSize: 56, marginBottom: 12 }}>🚨</div>
-        <h1 style={{ color: 'white', fontSize: 32, fontFamily: 'Georgia,serif', fontWeight: 700, margin: '0 0 8px' }}>
-          Numéros d&apos;Urgence
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, margin: '0 0 24px' }}>
-          Cameroun — Disponibles 24h/24 · 7j/7
-        </p>
-        {/* Boutons numéros critiques */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', maxWidth: 500, margin: '0 auto' }}>
-          {[
-            { num: '15', label: 'SAMU', icon: '🚑' },
-            { num: '18', label: 'Pompiers', icon: '🚒' },
-            { num: '17', label: 'Police', icon: '🚔' },
-            { num: '1730', label: 'Gendarmerie', icon: '⚖️' },
-            { num: '112', label: 'Urgences', icon: '📞' },
-            { num: '1510', label: 'Info Santé', icon: '💬' },
-          ].map(e => (
-            <a key={e.num} href={`tel:${e.num}`} style={{
-              background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)',
-              border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: 16,
-              padding: '12px 16px', textDecoration: 'none', textAlign: 'center', minWidth: 80,
-            }}>
-              <div style={{ fontSize: 20 }}>{e.icon}</div>
-              <div style={{ color: 'white', fontWeight: 700, fontSize: 18, lineHeight: 1 }}>{e.num}</div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, marginTop: 2 }}>{e.label}</div>
-            </a>
-          ))}
+    <div style={{ minHeight:'100vh', background:'#f5f5f0', fontFamily:'sans-serif' }}>
+      {/* Hero rouge */}
+      <div style={{ background:'linear-gradient(160deg,#7f1d1d,#dc2626)', padding:'0 0 56px', textAlign:'center' }}>
+        {/* Navbar mini */}
+        <div style={{ padding:'16px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', maxWidth:600, margin:'0 auto' }}>
+          <a href="/" style={{ color:'rgba(255,255,255,0.7)', fontSize:14, textDecoration:'none' }}>← Accueil</a>
+          <span style={{ color:'white', fontWeight:700, fontSize:14 }}>🏥 Santé Connect</span>
         </div>
-      </div>
-
-      <div style={{ maxWidth: 800, margin: '-20px auto 40px', padding: '0 16px' }}>
-        {/* Filtres */}
-        <div style={{ background: 'white', borderRadius: 20, padding: 20, marginBottom: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-          <input
-            placeholder="🔍 Rechercher un service, numéro..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box', marginBottom: 12, outline: 'none' }}
-          />
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-            <select value={city} onChange={e => setCity(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
-              {CITIES.map(c => <option key={c}>{c}</option>)}
-            </select>
-            <select value={cat} onChange={e => setCat(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
-              <option value="all">Toutes catégories</option>
-              {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
-            </select>
+        <div style={{ padding:'20px 20px 0' }}>
+          <div style={{ fontSize:52, marginBottom:10 }}>🚨</div>
+          <h1 style={{ color:'white', fontSize:26, fontFamily:'Georgia,serif', fontWeight:700, margin:'0 0 6px' }}>
+            Numéros d&apos;Urgence
+          </h1>
+          <p style={{ color:'rgba(255,255,255,0.75)', fontSize:14, margin:'0 0 20px' }}>
+            Cameroun — Disponibles 24h/24 · 7j/7 · Appels gratuits
+          </p>
+          {/* 4 numéros critiques en gros */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, maxWidth:380, margin:'0 auto' }}>
+            {[
+              { num:'117', label:'Police', icon:'🚔' },
+              { num:'118', label:'Pompiers', icon:'🚒' },
+              { num:'119', label:'SAMU', icon:'🚑' },
+              { num:'113', label:'Gendarmerie', icon:'⚖️' },
+              { num:'112', label:'Universel', icon:'📞' },
+              { num:'1510', label:'Info Santé', icon:'💬' },
+            ].map(e => (
+              <a key={e.num} href={`tel:${e.num}`} style={{
+                background:'rgba(255,255,255,0.15)', backdropFilter:'blur(10px)',
+                border:'1.5px solid rgba(255,255,255,0.3)', borderRadius:14,
+                padding:'12px 8px', textDecoration:'none', textAlign:'center',
+              }}>
+                <div style={{ fontSize:18, marginBottom:2 }}>{e.icon}</div>
+                <div style={{ color:'white', fontWeight:800, fontSize:20, lineHeight:1 }}>{e.num}</div>
+                <div style={{ color:'rgba(255,255,255,0.7)', fontSize:10, marginTop:3 }}>{e.label}</div>
+              </a>
+            ))}
           </div>
-          <p style={{ color: '#888', fontSize: 12, margin: 0 }}>{filtered.length} numéro(s) trouvé(s)</p>
-        </div>
-
-        {/* Numéros nationaux */}
-        {nationals.length > 0 && (
-          <div style={{ marginBottom: 24 }}>
-            <h2 style={{ color: '#0d4a3a', fontFamily: 'Georgia,serif', fontSize: 18, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              🇨🇲 Numéros Nationaux
-            </h2>
-            <div style={{ display: 'grid', gap: 10 }}>
-              {nationals.map(n => <NumberCard key={n.id} n={n} />)}
-            </div>
-          </div>
-        )}
-
-        {/* Numéros locaux groupés par ville */}
-        {locals.length > 0 && (
-          <div>
-            <h2 style={{ color: '#0d4a3a', fontFamily: 'Georgia,serif', fontSize: 18, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              📍 Numéros Locaux
-            </h2>
-            {CITIES.filter(c => c !== 'Toutes les villes' && c !== 'Nationale').map(c => {
-              const cityNums = locals.filter(n => n.city === c)
-              if (cityNums.length === 0) return null
-              return (
-                <div key={c} style={{ marginBottom: 20 }}>
-                  <h3 style={{ color: '#444', fontSize: 14, fontFamily: 'sans-serif', fontWeight: 700, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>
-                    📍 {c}
-                  </h3>
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    {cityNums.map(n => <NumberCard key={n.id} n={n} />)}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-            <p>Aucun numéro trouvé pour cette recherche</p>
-          </div>
-        )}
-
-        {/* Avertissement */}
-        <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 16, padding: 20, marginTop: 24, textAlign: 'center' }}>
-          <p style={{ color: '#92400e', fontSize: 13, fontFamily: 'sans-serif', margin: 0, lineHeight: 1.6 }}>
-            ⚠️ <strong>En cas d&apos;urgence vitale</strong>, composez le <strong>15 (SAMU)</strong>, <strong>18 (Pompiers)</strong> ou <strong>112</strong> immédiatement.<br />
-            Ces numéros sont disponibles même sans abonnement actif sur Santé Connect.
+          <p style={{ color:'rgba(255,255,255,0.5)', fontSize:11, marginTop:14 }}>
+            Accessibles même sans abonnement actif
           </p>
         </div>
       </div>
-    </div>
-  )
-}
 
-function NumberCard({ n }: { n: any }) {
-  const cat = CATEGORIES[n.category] || { label: n.category, icon: '📞', color: '#666' }
-  return (
-    <div style={{ background: 'white', borderRadius: 16, padding: '16px 20px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 16, border: `1px solid ${cat.color}22` }}>
-      <div style={{ width: 48, height: 48, borderRadius: 14, background: `${cat.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-        {cat.icon}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, color: '#0d4a3a', fontSize: 14, fontFamily: 'sans-serif' }}>{n.name}</div>
-        <div style={{ color: cat.color, fontWeight: 700, fontSize: 18, fontFamily: 'monospace' }}>{n.number}</div>
-        <div style={{ color: '#888', fontSize: 11, fontFamily: 'sans-serif' }}>
-          {cat.label}{n.city ? ` · ${n.city}` : ' · National'}
+      <div style={{ maxWidth:600, margin:'-20px auto 0', padding:'0 16px 40px' }}>
+        {/* Onglets */}
+        <div style={{ background:'white', borderRadius:20, padding:6, display:'flex', gap:4, marginBottom:16, boxShadow:'0 4px 20px rgba(0,0,0,0.08)' }}>
+          {[['national','🇨🇲 Nationaux'],['local','📍 Locaux'],['tips','💡 Conseils']].map(([v, l]) => (
+            <button key={v} onClick={() => setTab(v)} style={{
+              flex:1, padding:'10px 8px', borderRadius:14, border:'none', cursor:'pointer',
+              background: tab === v ? '#dc2626' : 'transparent',
+              color: tab === v ? 'white' : '#666',
+              fontWeight:700, fontSize:13,
+            }}>{l}</button>
+          ))}
         </div>
+
+        {/* Numéros nationaux */}
+        {tab === 'national' && (
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <p style={{ color:'#888', fontSize:12, margin:'0 0 4px', textAlign:'center' }}>
+              Ces numéros sont <strong>gratuits</strong> et valables sur tout le territoire camerounais
+            </p>
+            {NATIONALS.map(n => (
+              <div key={n.num} style={{
+                background:'white', borderRadius:18, padding:'16px 18px',
+                boxShadow:'0 2px 12px rgba(0,0,0,0.06)',
+                border:`1.5px solid ${n.color}20`,
+                display:'flex', alignItems:'center', gap:14,
+              }}>
+                <div style={{ width:52, height:52, borderRadius:15, background:`${n.color}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>
+                  {n.icon}
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontWeight:700, color:'#0d4a3a', fontSize:15, marginBottom:2 }}>{n.label}</div>
+                  <div style={{ color:n.color, fontWeight:800, fontSize:22, fontFamily:'monospace', lineHeight:1 }}>{n.num}</div>
+                  <div style={{ color:'#888', fontSize:11, marginTop:4, lineHeight:1.4 }}>{n.desc}</div>
+                </div>
+                <a href={`tel:${n.num}`} style={{
+                  background:n.color, color:'white', borderRadius:12,
+                  padding:'10px 14px', textDecoration:'none', fontWeight:700,
+                  fontSize:13, flexShrink:0, display:'flex', alignItems:'center', gap:5,
+                }}>
+                  📞 Appeler
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Numéros locaux */}
+        {tab === 'local' && (
+          <div>
+            {LOCALS.map(section => (
+              <div key={section.city} style={{ marginBottom:20 }}>
+                <h3 style={{ color:'#0d4a3a', fontFamily:'Georgia,serif', fontSize:15, margin:'0 0 10px', display:'flex', alignItems:'center', gap:6 }}>
+                  📍 {section.city}
+                </h3>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {section.nums.map(n => (
+                    <div key={n.num} style={{ background:'white', borderRadius:14, padding:'14px 16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)', display:'flex', alignItems:'center', gap:12 }}>
+                      <span style={{ fontSize:20, flexShrink:0 }}>{n.icon}</span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontWeight:600, color:'#333', fontSize:13 }}>{n.label}</div>
+                        <div style={{ color:'#dc2626', fontWeight:700, fontSize:14, fontFamily:'monospace' }}>{n.num}</div>
+                      </div>
+                      <a href={`tel:${n.num}`} style={{ background:'#dc2626', color:'white', borderRadius:10, padding:'8px 12px', textDecoration:'none', fontWeight:700, fontSize:12, flexShrink:0 }}>
+                        📞
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Conseils */}
+        {tab === 'tips' && (
+          <div>
+            <div style={{ background:'white', borderRadius:20, padding:24, boxShadow:'0 4px 20px rgba(0,0,0,0.08)', marginBottom:16 }}>
+              <h3 style={{ color:'#0d4a3a', fontFamily:'Georgia,serif', fontSize:17, margin:'0 0 16px' }}>
+                💡 Conseils en cas d&apos;appel d&apos;urgence
+              </h3>
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                {TIPS.map((tip, i) => (
+                  <div key={i} style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+                    <div style={{ width:26, height:26, background:'#0d4a3a', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:700, fontSize:12, flexShrink:0, marginTop:1 }}>
+                      {i + 1}
+                    </div>
+                    <p style={{ color:'#444', fontSize:14, lineHeight:1.6, margin:0 }}>{tip}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background:'#fef2f2', border:'1.5px solid #fecaca', borderRadius:20, padding:20 }}>
+              <h4 style={{ color:'#dc2626', fontWeight:700, fontSize:14, margin:'0 0 10px' }}>
+                ⚠️ En cas d&apos;urgence vitale
+              </h4>
+              <p style={{ color:'#7f1d1d', fontSize:13, lineHeight:1.7, margin:'0 0 14px' }}>
+                Pour toute détresse médicale grave, composez immédiatement le <strong>119 (SAMU)</strong> ou le <strong>112</strong>. Ces numéros fonctionnent même <strong>sans abonnement téléphonique actif</strong> et sont accessibles partout au Cameroun.
+              </p>
+              <div style={{ display:'flex', gap:8 }}>
+                <a href="tel:119" style={{ flex:1, background:'#dc2626', color:'white', borderRadius:12, padding:'12px', textAlign:'center', textDecoration:'none', fontWeight:800, fontSize:16 }}>
+                  119 SAMU
+                </a>
+                <a href="tel:112" style={{ flex:1, background:'#7f1d1d', color:'white', borderRadius:12, padding:'12px', textAlign:'center', textDecoration:'none', fontWeight:800, fontSize:16 }}>
+                  112
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      <a href={`tel:${n.number}`} style={{
-        background: cat.color, color: 'white', borderRadius: 12, padding: '10px 16px',
-        textDecoration: 'none', fontWeight: 700, fontSize: 13, fontFamily: 'sans-serif',
-        display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
-      }}>
-        📞 Appeler
-      </a>
     </div>
   )
 }

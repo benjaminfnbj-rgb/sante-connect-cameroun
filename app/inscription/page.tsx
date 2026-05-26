@@ -3,15 +3,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, CheckCircle } from 'lucide-react'
 
 const roles = [
-  { value: 'patient', label: '🏠 Patient / Particulier', desc: 'Accédez aux soins et services de santé' },
-  { value: 'professional', label: '🩺 Médecin / Spécialiste', desc: 'Gérez vos rendez-vous et patients' },
-  { value: 'pharmacy', label: '💊 Pharmacie', desc: 'Vendez vos médicaments en ligne' },
-  { value: 'clinic', label: '🏥 Clinique / Hôpital', desc: 'Présentez vos services médicaux' },
-  { value: 'insurance', label: '🛡️ Compagnie d\'assurance', desc: 'Proposez vos offres d\'assurance santé' },
-  { value: 'ngo', label: '🤝 ONG / Organisation', desc: 'Actions de santé publique et humanitaire' },
+  { value: 'patient', icon: '👤', label: 'Patient / Particulier', desc: 'Accéder aux soins, rendez-vous, pharmacie et services de santé', color: '#0d4a3a', bg: '#e8f5ee' },
+  { value: 'professional', icon: '👨‍⚕️', label: 'Médecin / Spécialiste', desc: 'Gérer vos consultations et votre agenda médical en ligne', color: '#2563eb', bg: '#eff6ff' },
+  { value: 'pharmacy', icon: '💊', label: 'Pharmacie', desc: 'Publier votre stock et recevoir des commandes en ligne', color: '#059669', bg: '#ecfdf5' },
+  { value: 'clinic', icon: '🏥', label: 'Clinique / Hôpital', desc: 'Présenter vos services et accueillir de nouveaux patients', color: '#7c3aed', bg: '#f5f3ff' },
+  { value: 'insurance', icon: '🛡️', label: 'Compagnie d\'assurance', desc: 'Proposer vos offres d\'assurance santé, maladie et vie', color: '#d97706', bg: '#fffbeb' },
+  { value: 'ngo', icon: '🤝', label: 'ONG / Organisation', desc: 'Mener des actions de santé publique et humanitaire', color: '#db2777', bg: '#fdf2f8' },
 ]
 
 export default function InscriptionPage() {
@@ -26,6 +25,7 @@ export default function InscriptionPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const selectedRole = roles.find(r => r.value === role)!
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,153 +33,141 @@ export default function InscriptionPage() {
     setError('')
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, user_type: role, phone, gender }
-      }
+      email, password,
+      options: { data: { full_name: fullName, user_type: role, phone, gender } }
     })
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      setSuccess(true)
-    }
+    if (error) { setError(error.message); setLoading(false) }
+    else { setSuccess(true) }
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{background: 'var(--bg-cream)'}}>
-        <div className="text-center max-w-md">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{background: '#dcfce7'}}>
-            <CheckCircle size={40} style={{color: 'var(--green-mid)'}} />
-          </div>
-          <h2 className="text-3xl font-bold mb-4" style={{fontFamily: 'Fraunces, serif'}}>Compte créé avec succès !</h2>
-          <p className="mb-6" style={{color: 'var(--text-muted)'}}>
-            Vérifiez votre boîte email <strong>{email}</strong> pour confirmer votre compte. Vous bénéficiez de <strong>1 mois d'essai gratuit</strong>.
-          </p>
-          <Link href="/connexion" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white" style={{background: 'var(--green-deep)'}}>
-            Se connecter
-          </Link>
-        </div>
+  if (success) return (
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#0d4a3a,#1a7a5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: 'white', borderRadius: 24, padding: 40, maxWidth: 420, width: '100%', textAlign: 'center' }}>
+        <div style={{ fontSize: 60, marginBottom: 16 }}>✅</div>
+        <h2 style={{ color: '#0d4a3a', fontFamily: 'Georgia,serif', fontSize: 22, margin: '0 0 12px' }}>Compte créé !</h2>
+        <p style={{ color: '#666', fontSize: 14, fontFamily: 'sans-serif', lineHeight: 1.7, margin: '0 0 24px' }}>
+          Vérifiez votre email <strong>{email}</strong> et cliquez sur le lien pour activer votre compte.<br/>
+          Votre mois d&apos;essai gratuit démarre dès activation.
+        </p>
+        <Link href="/connexion" style={{ display: 'inline-block', background: '#0d4a3a', color: 'white', borderRadius: 50, padding: '12px 32px', fontWeight: 700, fontSize: 14, textDecoration: 'none', fontFamily: 'sans-serif' }}>
+          Se connecter →
+        </Link>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{background: 'var(--bg-cream)'}}>
-      <div className="w-full max-w-xl">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm mb-8" style={{color: 'var(--text-muted)'}}>
-          <ArrowLeft size={16} /> Retour à l'accueil
-        </Link>
-        
-        {/* Progress */}
-        <div className="flex items-center gap-2 mb-8">
-          {[1, 2].map(s => (
-            <div key={s} className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{
-                background: step >= s ? 'var(--green-deep)' : 'var(--border)',
-                color: step >= s ? 'white' : 'var(--text-muted)'
-              }}>{s}</div>
-              {s < 2 && <div className="h-0.5 w-16" style={{background: step > s ? 'var(--green-deep)' : 'var(--border)'}} />}
-            </div>
-          ))}
-          <span className="ml-2 text-sm" style={{color: 'var(--text-muted)'}}>{step === 1 ? 'Type de compte' : 'Informations'}</span>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#0d4a3a,#1a7a5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: 'white', borderRadius: 28, padding: '36px 28px', width: '100%', maxWidth: 460, boxShadow: '0 24px 60px rgba(0,0,0,0.2)' }}>
+
+        {/* Logo + titre */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ width: 56, height: 56, background: 'linear-gradient(135deg,#0d4a3a,#2eb87a)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 12px' }}>🏥</div>
+          <h1 style={{ color: '#0d4a3a', fontFamily: 'Georgia,serif', fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>Créer votre compte</h1>
+          <p style={{ color: '#888', fontSize: 13, fontFamily: 'sans-serif', margin: 0 }}>1 mois d&apos;essai gratuit · Sans carte bancaire</p>
+          {/* Barre de progression */}
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 16 }}>
+            {[1, 2].map(i => (
+              <div key={i} style={{ flex: 1, maxWidth: 80, height: 4, borderRadius: 4, background: i <= step ? 'linear-gradient(90deg,#0d4a3a,#2eb87a)' : '#e5e7eb', transition: 'background 0.3s' }} />
+            ))}
+          </div>
+          <p style={{ color: '#aaa', fontSize: 11, fontFamily: 'sans-serif', marginTop: 6 }}>Étape {step} sur 2</p>
         </div>
 
-        <div className="p-8 rounded-3xl" style={{background: 'white', boxShadow: '0 4px 24px rgba(0,0,0,0.06)'}}>
-          <h1 className="text-3xl font-bold mb-2" style={{fontFamily: 'Fraunces, serif'}}>
-            {step === 1 ? 'Choisissez votre profil' : 'Créer votre compte'}
-          </h1>
-          <p className="mb-6" style={{color: 'var(--text-muted)'}}>
-            {step === 1 ? 'Sélectionnez le type de compte qui vous correspond' : '1 mois d\'essai gratuit — sans carte bancaire'}
-          </p>
+        {error && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '12px 16px', color: '#dc2626', fontSize: 13, fontFamily: 'sans-serif', marginBottom: 16 }}>
+            ⚠️ {error}
+          </div>
+        )}
 
-          {error && <div className="p-4 rounded-xl mb-6 text-sm" style={{background: '#fee2e2', color: '#dc2626'}}>{error}</div>}
-
-          {step === 1 && (
-            <div className="space-y-3">
+        {/* ÉTAPE 1 — Choisir le type de compte */}
+        {step === 1 && (
+          <div>
+            <p style={{ color: '#0d4a3a', fontWeight: 700, fontSize: 14, fontFamily: 'sans-serif', margin: '0 0 14px' }}>Je suis...</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
               {roles.map(r => (
-                <button
-                  key={r.value}
-                  onClick={() => setRole(r.value)}
-                  className="w-full text-left p-4 rounded-xl transition-all"
-                  style={{
-                    background: role === r.value ? '#f0fdf4' : 'var(--bg-cream)',
-                    border: `2px solid ${role === r.value ? 'var(--green-mid)' : 'transparent'}`,
-                  }}
-                >
-                  <div className="font-semibold text-sm">{r.label}</div>
-                  <div className="text-xs mt-0.5" style={{color: 'var(--text-muted)'}}>{r.desc}</div>
-                </button>
+                <div key={r.value} onClick={() => setRole(r.value)} style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '14px 16px', borderRadius: 16, cursor: 'pointer', transition: 'all 0.15s',
+                  border: role === r.value ? `2px solid ${r.color}` : '2px solid #f0f0f0',
+                  background: role === r.value ? r.bg : 'white',
+                }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: role === r.value ? r.bg : '#f5f5f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+                    {r.icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, color: role === r.value ? r.color : '#1a2e26', fontSize: 14, fontFamily: 'sans-serif' }}>{r.label}</div>
+                    <div style={{ color: '#888', fontSize: 12, fontFamily: 'sans-serif', marginTop: 2 }}>{r.desc}</div>
+                  </div>
+                  <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${role === r.value ? r.color : '#ddd'}`, background: role === r.value ? r.color : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {role === r.value && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
+                  </div>
+                </div>
               ))}
-              <button
-                onClick={() => setStep(2)}
-                className="w-full py-3.5 rounded-xl font-bold text-white mt-4"
-                style={{background: 'var(--green-deep)'}}
-              >
-                Continuer
+            </div>
+            <button onClick={() => setStep(2)} style={{
+              width: '100%', padding: '14px', borderRadius: 50, border: 'none', cursor: 'pointer',
+              background: `linear-gradient(135deg,${selectedRole.color},#2eb87a)`,
+              color: 'white', fontWeight: 700, fontSize: 15, fontFamily: 'sans-serif',
+            }}>
+              Continuer avec {selectedRole.label} →
+            </button>
+            <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#888', fontFamily: 'sans-serif' }}>
+              Déjà un compte ? <Link href="/connexion" style={{ color: '#0d4a3a', fontWeight: 700 }}>Se connecter</Link>
+            </p>
+          </div>
+        )}
+
+        {/* ÉTAPE 2 — Informations */}
+        {step === 2 && (
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: selectedRole.bg, borderRadius: 12, padding: '10px 14px', marginBottom: 20 }}>
+              <span style={{ fontSize: 20 }}>{selectedRole.icon}</span>
+              <span style={{ fontWeight: 700, color: selectedRole.color, fontSize: 13, fontFamily: 'sans-serif' }}>{selectedRole.label}</span>
+              <button type="button" onClick={() => setStep(1)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#888', fontSize: 12, cursor: 'pointer', fontFamily: 'sans-serif' }}>Changer</button>
+            </div>
+
+            {[
+              { label: 'Nom complet *', value: fullName, set: setFullName, type: 'text', placeholder: 'Jean Dupont' },
+              { label: 'Adresse email *', value: email, set: setEmail, type: 'email', placeholder: 'vous@email.com' },
+              { label: 'Mot de passe *', value: password, set: setPassword, type: 'password', placeholder: 'Minimum 8 caractères' },
+              { label: 'Téléphone', value: phone, set: setPhone, type: 'tel', placeholder: '+237 6XX XXX XXX' },
+            ].map(f => (
+              <div key={f.label} style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>{f.label}</label>
+                <input type={f.type} required={f.label.includes('*')} placeholder={f.placeholder} value={f.value}
+                  onChange={e => f.set(e.target.value)}
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }}
+                />
+              </div>
+            ))}
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Genre</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[['male','Homme','👨'],['female','Femme','👩'],['other','Autre','🧑']].map(([v, l, ic]) => (
+                  <div key={v} onClick={() => setGender(v)} style={{
+                    flex: 1, padding: '10px 8px', borderRadius: 12, textAlign: 'center', cursor: 'pointer',
+                    border: gender === v ? '2px solid #0d4a3a' : '2px solid #e5e7eb',
+                    background: gender === v ? '#e8f5ee' : 'white',
+                  }}>
+                    <div style={{ fontSize: 18 }}>{ic}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: gender === v ? '#0d4a3a' : '#666', fontFamily: 'sans-serif' }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: '13px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: 'white', color: '#666', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'sans-serif' }}>← Retour</button>
+              <button type="submit" disabled={loading} style={{ flex: 2, padding: '13px', borderRadius: 50, border: 'none', background: 'linear-gradient(135deg,#0d4a3a,#2eb87a)', color: 'white', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'sans-serif' }}>
+                {loading ? '⏳ Création...' : '🚀 Créer mon compte'}
               </button>
             </div>
-          )}
+          </form>
+        )}
 
-          {step === 2 && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Nom complet *</label>
-                <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)}
-                  placeholder="Jean Dupont" className="w-full px-4 py-3 rounded-xl outline-none"
-                  style={{background: 'var(--bg-cream)', border: '2px solid var(--border)'}} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Email *</label>
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="votre@email.com" className="w-full px-4 py-3 rounded-xl outline-none"
-                  style={{background: 'var(--bg-cream)', border: '2px solid var(--border)'}} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Téléphone</label>
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                  placeholder="+237 6XX XXX XXX" className="w-full px-4 py-3 rounded-xl outline-none"
-                  style={{background: 'var(--bg-cream)', border: '2px solid var(--border)'}} />
-              </div>
-              {role === 'patient' && (
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">Genre</label>
-                  <select value={gender} onChange={e => setGender(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl outline-none"
-                    style={{background: 'var(--bg-cream)', border: '2px solid var(--border)'}}>
-                    <option value="">Sélectionner</option>
-                    <option value="male">Homme</option>
-                    <option value="female">Femme</option>
-                    <option value="other">Autre</option>
-                  </select>
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Mot de passe *</label>
-                <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Minimum 8 caractères" className="w-full px-4 py-3 rounded-xl outline-none"
-                  minLength={8} style={{background: 'var(--bg-cream)', border: '2px solid var(--border)'}} />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setStep(1)}
-                  className="px-6 py-3 rounded-xl font-semibold"
-                  style={{background: 'var(--bg-cream)', color: 'var(--text-muted)'}}>
-                  Retour
-                </button>
-                <button type="submit" disabled={loading}
-                  className="flex-1 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
-                  style={{background: 'var(--green-deep)'}}>
-                  {loading ? <><Loader2 size={18} className="animate-spin" /> Création...</> : 'Créer mon compte gratuit'}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-        <p className="text-center mt-6 text-sm" style={{color: 'var(--text-muted)'}}>
-          Déjà un compte ? <Link href="/connexion" className="font-semibold" style={{color: 'var(--green-mid)'}}>Se connecter</Link>
-        </p>
+        <Link href="/" style={{ display: 'block', textAlign: 'center', marginTop: 16, color: '#aaa', fontSize: 12, textDecoration: 'none', fontFamily: 'sans-serif' }}>← Retour à l&apos;accueil</Link>
       </div>
     </div>
   )

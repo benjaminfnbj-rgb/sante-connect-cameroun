@@ -66,6 +66,15 @@ export default function SanteFeministePage() {
           </button>
         </div>
       </header>
+              {/* Bannière serviettes */}
+              <div style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1px solid #f9a8d4',borderRadius:16,padding:'14px 18px',margin:'16px 0',display:'flex',alignItems:'center',gap:12}}>
+                <span style={{fontSize:24,flexShrink:0}}>🌸</span>
+                <div>
+                  <p style={{fontWeight:700,color:'#be185d',fontSize:13,fontFamily:'sans-serif',margin:'0 0 3px'}}>Serviettes hygiéniques gratuites</p>
+                  <p style={{color:'#9d174d',fontSize:12,fontFamily:'sans-serif',margin:0,lineHeight:1.5}}>Incluses dans votre abonnement pour les femmes de moins de 50 ans. Retirez-les dans la pharmacie partenaire la plus proche.</p>
+                </div>
+                <a href="/kit-sante" style={{flexShrink:0,background:'#be185d',color:'white',borderRadius:10,padding:'6px 12px',fontSize:11,fontWeight:700,textDecoration:'none',fontFamily:'sans-serif'}}>Retirer →</a>
+              </div>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
         {/* Overview card */}
