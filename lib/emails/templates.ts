@@ -50,7 +50,7 @@ export const emailTemplates = {
     <div style="background:#f0fdf8;padding:24px 32px;text-align:center;border-top:1px solid #d4ede5;">
       <p style="color:#7a9a8e;font-size:12px;margin:0;">
         © 2025 Santé Connect Cameroun · Fait avec ❤️ pour la santé au Cameroun<br>
-        <a href="mailto:support@santeconnect.cm" style="color:#1a7a5e;">support@santeconnect.cm</a>
+        <a href="mailto:benjaminfnbj@gmail.com" style="color:#1a7a5e;">Nous contacter</a>
       </p>
     </div>
   </div>

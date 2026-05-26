@@ -37,7 +37,21 @@ export default function InscriptionPage() {
       options: { data: { full_name: fullName, user_type: role, phone, gender } }
     })
     if (error) { setError(error.message); setLoading(false) }
-    else { setSuccess(true) }
+    else {
+      // Envoyer email de bienvenue via Resend
+      try {
+        await fetch('/api/emails/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: email,
+            name: fullName,
+            verifyUrl: 'https://sante-connect-cameroun.vercel.app/connexion'
+          })
+        })
+      } catch(e) { /* email non bloquant */ }
+      setSuccess(true)
+    }
   }
 
   if (success) return (
