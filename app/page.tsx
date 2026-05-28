@@ -75,7 +75,7 @@ export default function HomePage() {
         {/* Urgences sticky */}
         <div style={{ position: 'absolute', top: 88, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
           <div style={{ background: 'rgba(220,38,38,0.9)', backdropFilter: 'blur(20px)', borderRadius: 50, padding: '6px 16px', display: 'flex', gap: 12 }}>
-            {[['15','SAMU'],['18','Pompiers'],['17','Police'],['112','Urgences']].map(([n, l]) => (
+            {[['117','Police'],['118','Pompiers'],['119','SAMU'],['113','Gendarmerie'],['112','Universel'],['1510','Info Santé']].map(([n, l]) => (
               <a key={n} href={`tel:${n}`} style={{ color: 'white', fontFamily: 'sans-serif', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>{n} {l}</a>
             ))}
           </div>

@@ -8,7 +8,7 @@ const roles = [
   { value: 'patient', icon: '👤', label: 'Patient / Particulier', desc: 'Accéder aux soins, rendez-vous, pharmacie et services de santé', color: '#0d4a3a', bg: '#e8f5ee' },
   { value: 'professional', icon: '👨‍⚕️', label: 'Médecin / Spécialiste', desc: 'Gérer vos consultations et votre agenda médical en ligne', color: '#2563eb', bg: '#eff6ff' },
   { value: 'pharmacy', icon: '💊', label: 'Pharmacie', desc: 'Publier votre stock et recevoir des commandes en ligne', color: '#059669', bg: '#ecfdf5' },
-  { value: 'clinic', icon: '🏥', label: 'Clinique / Hôpital', desc: 'Présenter vos services et accueillir de nouveaux patients', color: '#7c3aed', bg: '#f5f3ff' },
+  { value: 'structure', icon: '🏥', label: 'Clinique / Hôpital', desc: 'Présenter vos services et accueillir de nouveaux patients', color: '#7c3aed', bg: '#f5f3ff' },
   { value: 'insurance', icon: '🛡️', label: 'Compagnie d\'assurance', desc: 'Proposer vos offres d\'assurance santé, maladie et vie', color: '#d97706', bg: '#fffbeb' },
   { value: 'ngo', icon: '🤝', label: 'ONG / Organisation', desc: 'Mener des actions de santé publique et humanitaire', color: '#db2777', bg: '#fdf2f8' },
 ]

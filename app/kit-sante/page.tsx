@@ -31,12 +31,12 @@ export default function KitSantePage() {
     setGenerating(true)
     const code = 'SCK-' + Math.random().toString(36).substring(2, 8).toUpperCase()
     const month = new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
+    const kitType = sub?.include_condoms !== false ? 'condoms_pads' : 'pads'
     await supabase.from('kit_withdrawals').insert({
       user_id: profile.id,
+      subscription_id: sub?.id,
+      kit_type: kitType,
       receipt_code: code,
-      month,
-      includes_condoms: sub?.include_condoms !== false,
-      includes_pads: profile?.gender === 'female' && (profile?.date_of_birth ? (new Date().getFullYear() - new Date(profile.date_of_birth).getFullYear()) < 50 : true),
     })
     setReceipt({ code, month })
     setGenerating(false)
@@ -46,7 +46,8 @@ export default function KitSantePage() {
 
   const isFemaleUnder50 = profile?.gender === 'female' && (!profile?.date_of_birth || (new Date().getFullYear() - new Date(profile?.date_of_birth).getFullYear()) < 50)
   const isActive = sub?.status === 'active' || sub?.status === 'trial'
-  const thisMonthWithdrawal = withdrawals.find(w => w.month === new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' }))
+  const thisMonthMonth = new Date().toISOString().slice(0,7)
+  const thisMonthWithdrawal = withdrawals.find(w => w.created_at?.slice(0,7) === thisMonthMonth)
 
   return (
     <div style={{ minHeight:'100vh', background:'#faf8f3', paddingBottom:40 }}>
@@ -141,7 +142,7 @@ export default function KitSantePage() {
                   <div key={w.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid #f0f0f0' }}>
                     <div>
                       <div style={{ fontWeight:700, fontSize:13, color:'#333', fontFamily:'monospace' }}>{w.receipt_code}</div>
-                      <div style={{ color:'#888', fontSize:12 }}>{w.month}</div>
+                      <div style={{ color:'#888', fontSize:12 }}>{new Date(w.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</div>
                     </div>
                     <span style={{ background:'#dcfce7', color:'#16a34a', borderRadius:8, padding:'3px 10px', fontSize:11, fontWeight:700 }}>Retiré</span>
                   </div>

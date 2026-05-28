@@ -3,121 +3,97 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function ConnexionPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError('')
+    setLoading(true); setError('')
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError('Email ou mot de passe incorrect')
-      setLoading(false)
-    } else {
-      router.push('/dashboard')
-    }
+    if (error) { setError('Email ou mot de passe incorrect'); setLoading(false) }
+    else router.push('/dashboard')
   }
 
   return (
-    <div className="min-h-screen flex" style={{background: 'var(--bg-cream)'}}>
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white" style={{background: 'linear-gradient(135deg, #0a5c36 0%, #1a8a56 100%)'}}>
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/20 font-bold text-lg">SC</div>
-          <span className="font-bold text-xl" style={{fontFamily: 'Fraunces, serif'}}>Santé Connect</span>
-        </Link>
-        <div>
-          <h2 className="text-4xl font-bold mb-4" style={{fontFamily: 'Fraunces, serif'}}>Votre santé, notre priorité</h2>
-          <p className="text-lg opacity-80">Accédez à des milliers de professionnels de santé vérifiés partout au Cameroun.</p>
-        </div>
-        <div className="p-6 rounded-2xl" style={{background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)'}}>
-          <p className="text-sm opacity-80 mb-1">🚨 Urgences toujours accessibles</p>
-          <p className="font-semibold">SAMU: 15 · Pompiers: 18 · Police: 17</p>
-        </div>
-      </div>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(160deg,#0a2e22,#0d4a3a,#1a7a5e)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:20 }}>
       
-      {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm mb-8" style={{color: 'var(--text-muted)'}}>
-            <ArrowLeft size={16} /> Retour à l'accueil
-          </Link>
-          <h1 className="text-3xl font-bold mb-2" style={{fontFamily: 'Fraunces, serif'}}>Connexion</h1>
-          <p className="mb-8" style={{color: 'var(--text-muted)'}}>Bienvenue ! Entrez vos identifiants pour continuer.</p>
-          
-          {error && (
-            <div className="p-4 rounded-xl mb-6 text-sm" style={{background: '#fee2e2', color: '#dc2626'}}>
-              {error}
-            </div>
-          )}
+      {/* Logo */}
+      <div style={{ textAlign:'center', marginBottom:28 }}>
+        <div style={{ width:68, height:68, background:'rgba(255,255,255,0.12)', backdropFilter:'blur(20px)', borderRadius:22, display:'flex', alignItems:'center', justifyContent:'center', fontSize:32, margin:'0 auto 12px', border:'1.5px solid rgba(255,255,255,0.2)', boxShadow:'0 8px 32px rgba(0,0,0,0.2)' }}>🏥</div>
+        <h1 style={{ color:'white', fontFamily:'Georgia,serif', fontSize:22, fontWeight:700, margin:'0 0 3px' }}>Santé Connect Cameroun</h1>
+        <p style={{ color:'rgba(255,255,255,0.55)', fontSize:12, fontFamily:'sans-serif' }}>Votre santé, connectée au Cameroun</p>
+      </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="votre@email.com"
-                className="w-full px-4 py-3 rounded-xl outline-none transition-all"
-                style={{background: 'white', border: '2px solid var(--border)', fontSize: '0.95rem'}}
-                onFocus={e => e.target.style.borderColor = 'var(--green-mid)'}
-                onBlur={e => e.target.style.borderColor = 'var(--border)'}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Mot de passe</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 pr-12 rounded-xl outline-none transition-all"
-                  style={{background: 'white', border: '2px solid var(--border)', fontSize: '0.95rem'}}
-                  onFocus={e => e.target.style.borderColor = 'var(--green-mid)'}
-                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{color: 'var(--text-muted)'}}>
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              <div className="flex justify-end mt-2">
-                <Link href="/mot-de-passe-oublie" className="text-sm" style={{color: 'var(--green-mid)'}}>Mot de passe oublié ?</Link>
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2"
-              style={{background: loading ? 'var(--green-mid)' : 'var(--green-deep)', opacity: loading ? 0.7 : 1}}
-            >
-              {loading ? <><Loader2 size={18} className="animate-spin" /> Connexion...</> : 'Se connecter'}
-            </button>
-          </form>
+      {/* Card */}
+      <div style={{ background:'white', borderRadius:28, padding:'32px 28px', boxShadow:'0 24px 60px rgba(0,0,0,0.3)', width:'100%', maxWidth:400 }}>
+        <h2 style={{ color:'#0d4a3a', fontFamily:'Georgia,serif', fontSize:24, fontWeight:700, margin:'0 0 4px' }}>Connexion</h2>
+        <p style={{ color:'#888', fontSize:13, fontFamily:'sans-serif', margin:'0 0 24px' }}>Bienvenue ! Entrez vos identifiants.</p>
 
-          <p className="text-center mt-8 text-sm" style={{color: 'var(--text-muted)'}}>
-            Pas encore de compte ?{' '}
-            <Link href="/inscription" className="font-semibold" style={{color: 'var(--green-mid)'}}>Créer un compte gratuit</Link>
-          </p>
-          
-          <div className="mt-6 p-4 rounded-xl text-center" style={{background: '#fee2e2'}}>
-            <p className="text-sm font-semibold" style={{color: '#dc2626'}}>🚨 Urgence médicale ?</p>
-            <p className="text-sm mt-1" style={{color: '#dc2626'}}>Appelez le SAMU : <strong>15</strong></p>
+        {error && (
+          <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:12, padding:'12px 16px', color:'#dc2626', fontSize:13, fontFamily:'sans-serif', marginBottom:18, display:'flex', alignItems:'center', gap:8 }}>
+            ⚠️ {error}
           </div>
+        )}
+
+        <form onSubmit={handleLogin}>
+          <label style={{ display:'block', fontWeight:700, color:'#0d4a3a', fontSize:13, fontFamily:'sans-serif', marginBottom:6 }}>Adresse email</label>
+          <input type="email" required placeholder="vous@email.com" value={email}
+            onChange={e => setEmail(e.target.value)}
+            style={{ width:'100%', padding:'13px 16px', borderRadius:14, border:'2px solid #e5e7eb', fontSize:14, outline:'none', fontFamily:'sans-serif', boxSizing:'border-box', marginBottom:16 }}
+          />
+
+          <label style={{ display:'block', fontWeight:700, color:'#0d4a3a', fontSize:13, fontFamily:'sans-serif', marginBottom:6 }}>Mot de passe</label>
+          <div style={{ position:'relative', marginBottom:10 }}>
+            <input type={showPwd ? 'text' : 'password'} required placeholder="••••••••" value={password}
+              onChange={e => setPassword(e.target.value)}
+              style={{ width:'100%', padding:'13px 48px 13px 16px', borderRadius:14, border:'2px solid #e5e7eb', fontSize:14, outline:'none', fontFamily:'sans-serif', boxSizing:'border-box' }}
+            />
+            <button type="button" onClick={() => setShowPwd(!showPwd)} style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', fontSize:16, color:'#aaa' }}>
+              {showPwd ? '🙈' : '👁️'}
+            </button>
+          </div>
+
+          <div style={{ textAlign:'right', marginBottom:22 }}>
+            <Link href="/mot-de-passe-oublie" style={{ color:'#0d4a3a', fontSize:13, fontFamily:'sans-serif', fontWeight:600, textDecoration:'none' }}>Mot de passe oublié ?</Link>
+          </div>
+
+          <button type="submit" disabled={loading} style={{
+            width:'100%', padding:'15px', borderRadius:50, border:'none', cursor:'pointer',
+            background: loading ? '#ccc' : 'linear-gradient(135deg,#0d4a3a,#2eb87a)',
+            color:'white', fontWeight:700, fontSize:16, fontFamily:'sans-serif',
+            boxShadow: loading ? 'none' : '0 6px 20px rgba(13,74,58,0.35)',
+          }}>
+            {loading ? '⏳ Connexion en cours...' : '🔐 Se connecter'}
+          </button>
+        </form>
+
+        <p style={{ textAlign:'center', marginTop:20, fontSize:13, color:'#888', fontFamily:'sans-serif' }}>
+          Pas encore de compte ?{' '}
+          <Link href="/inscription" style={{ color:'#0d4a3a', fontWeight:700, textDecoration:'none' }}>Créer un compte gratuit</Link>
+        </p>
+      </div>
+
+      {/* Numéros urgence corrects Cameroun */}
+      <div style={{ marginTop:20, background:'rgba(185,28,28,0.85)', backdropFilter:'blur(10px)', borderRadius:18, padding:'14px 20px', width:'100%', maxWidth:400 }}>
+        <p style={{ color:'white', fontWeight:700, fontSize:12, fontFamily:'sans-serif', margin:'0 0 10px', textAlign:'center', letterSpacing:0.5 }}>🚨 URGENCES CAMEROUN — APPELS GRATUITS</p>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+          {[['117','Police'],['118','Pompiers'],['119','SAMU'],['113','Gendarmerie'],['112','Universel'],['1510','Info Santé']].map(([n,l]) => (
+            <a key={n} href={`tel:${n}`} style={{ background:'rgba(255,255,255,0.15)', borderRadius:10, padding:'8px 4px', textDecoration:'none', textAlign:'center', border:'1px solid rgba(255,255,255,0.2)' }}>
+              <div style={{ color:'white', fontWeight:800, fontSize:18, fontFamily:'monospace', lineHeight:1 }}>{n}</div>
+              <div style={{ color:'rgba(255,255,255,0.75)', fontSize:9, fontFamily:'sans-serif', marginTop:2 }}>{l}</div>
+            </a>
+          ))}
         </div>
       </div>
+
+      <Link href="/" style={{ color:'rgba(255,255,255,0.4)', fontSize:12, fontFamily:'sans-serif', textDecoration:'none', marginTop:16 }}>← Retour à l&apos;accueil</Link>
     </div>
   )
 }
