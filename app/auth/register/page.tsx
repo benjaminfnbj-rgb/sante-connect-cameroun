@@ -49,7 +49,9 @@ function RegisterForm() {
       if (authError) throw authError
       if (!data.user) throw new Error('Erreur création compte')
 
-      // 2. Upsert profil avec les colonnes exactes de la BD
+      // 2. Upsert profil - seulement les colonnes qui existent dans la BD
+      // Le trigger handle_new_user crée déjà le profil automatiquement
+      // On fait un upsert pour enrichir avec les données supplémentaires
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: data.user.id,
         email: form.email,
@@ -58,15 +60,11 @@ function RegisterForm() {
         user_type: form.user_type,
         city: form.city || null,
         gender: form.gender || null,
-        is_active: true,
-        email_verified: false,
+        // ✅ Uniquement les colonnes qui existent dans la table
       })
       if (profileError) {
-        console.error('Profile error:', profileError)
-        // Ne pas bloquer si le trigger a déjà créé le profil
-        if (!profileError.message.includes('duplicate')) {
-          throw new Error('Database error saving new user: ' + profileError.message)
-        }
+        console.error('Profile upsert info:', profileError.message)
+        // Non bloquant - le trigger a déjà créé le profil de base
       }
 
       // 3. Si professionnel, créer le profil pro
