@@ -2,15 +2,28 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 const PROTECTED = [
-  '/dashboard', '/profil', '/rendez-vous', '/pharmacie', '/sante-feminine',
+  '/dashboard', '/profil', '/rendez-vous', '/sante-feminine',
   '/assistant', '/assurances', '/kit-sante', '/notifications', '/admin',
   '/structures', '/professionnels', '/calendrier-vaccinal',
 ]
-
-const AUTH_ONLY = ['/connexion', '/inscription']
+const AUTH_PAGES = ['/connexion', '/inscription']
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Laisser passer les API routes et ressources statiques sans vérification
+  if (pathname.startsWith('/api/') || pathname.startsWith('/_next')) {
+    return NextResponse.next({ request })
+  }
+
+  const isProtected = PROTECTED.some(r => pathname.startsWith(r))
+  const isAuthPage = AUTH_PAGES.includes(pathname)
+
+  // Si ni protégée ni page d'auth, passer directement (ex: /tarifs, /urgences, /)
+  if (!isProtected && !isAuthPage) {
+    return NextResponse.next({ request })
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -30,13 +43,10 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Rafraîchir la session (maintient la connexion active)
+  // Utiliser getUser() uniquement pour les pages qui en ont vraiment besoin
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isProtected = PROTECTED.some(r => pathname.startsWith(r))
-  const isAuthPage = AUTH_ONLY.includes(pathname)
-
-  // Non connecté → page protégée = rediriger vers connexion
+  // Non connecté → page protégée
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/connexion'
@@ -44,7 +54,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Connecté → essaie d'aller sur connexion/inscription = rediriger vers dashboard
+  // Connecté → page d'auth (rediriger vers dashboard)
   if (user && isAuthPage) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'

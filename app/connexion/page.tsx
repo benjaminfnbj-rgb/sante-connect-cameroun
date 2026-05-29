@@ -2,23 +2,37 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function ConnexionPage() {
+function ConnexionForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/dashboard'
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true); setError('')
+    setLoading(true)
+    setError('')
+
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError('Email ou mot de passe incorrect'); setLoading(false) }
-    else router.push('/dashboard')
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      setError('Email ou mot de passe incorrect')
+      setLoading(false)
+      return
+    }
+
+    // Session établie côté client → naviguer directement sans attendre le proxy
+    // window.location.href est plus rapide que router.push car il recharge la page
+    // et s'assure que les cookies de session sont bien envoyés avec la requête suivante
+    window.location.href = redirect
   }
 
   return (
@@ -44,43 +58,57 @@ export default function ConnexionPage() {
 
         <form onSubmit={handleLogin}>
           <label style={{ display:'block', fontWeight:700, color:'#0d4a3a', fontSize:13, fontFamily:'sans-serif', marginBottom:6 }}>Adresse email</label>
-          <input type="email" required placeholder="vous@email.com" value={email}
+          <input
+            type="email" required placeholder="vous@email.com" value={email}
             onChange={e => setEmail(e.target.value)}
             style={{ width:'100%', padding:'13px 16px', borderRadius:14, border:'2px solid #e5e7eb', fontSize:14, outline:'none', fontFamily:'sans-serif', boxSizing:'border-box', marginBottom:16 }}
           />
 
           <label style={{ display:'block', fontWeight:700, color:'#0d4a3a', fontSize:13, fontFamily:'sans-serif', marginBottom:6 }}>Mot de passe</label>
           <div style={{ position:'relative', marginBottom:10 }}>
-            <input type={showPwd ? 'text' : 'password'} required placeholder="••••••••" value={password}
+            <input
+              type={showPwd ? 'text' : 'password'} required placeholder="••••••••" value={password}
               onChange={e => setPassword(e.target.value)}
               style={{ width:'100%', padding:'13px 48px 13px 16px', borderRadius:14, border:'2px solid #e5e7eb', fontSize:14, outline:'none', fontFamily:'sans-serif', boxSizing:'border-box' }}
             />
-            <button type="button" onClick={() => setShowPwd(!showPwd)} style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', fontSize:16, color:'#aaa' }}>
+            <button type="button" onClick={() => setShowPwd(!showPwd)}
+              style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', fontSize:16, color:'#aaa' }}>
               {showPwd ? '🙈' : '👁️'}
             </button>
           </div>
 
           <div style={{ textAlign:'right', marginBottom:22 }}>
-            <Link href="/mot-de-passe-oublie" style={{ color:'#0d4a3a', fontSize:13, fontFamily:'sans-serif', fontWeight:600, textDecoration:'none' }}>Mot de passe oublié ?</Link>
+            <Link href="/mot-de-passe-oublie" style={{ color:'#0d4a3a', fontSize:13, fontFamily:'sans-serif', fontWeight:600, textDecoration:'none' }}>
+              Mot de passe oublié ?
+            </Link>
           </div>
 
           <button type="submit" disabled={loading} style={{
-            width:'100%', padding:'15px', borderRadius:50, border:'none', cursor:'pointer',
-            background: loading ? '#ccc' : 'linear-gradient(135deg,#0d4a3a,#2eb87a)',
-            color:'white', fontWeight:700, fontSize:16, fontFamily:'sans-serif',
+            width:'100%', padding:'15px', borderRadius:50, border:'none', cursor: loading ? 'not-allowed' : 'pointer',
+            background: loading ? '#d1fae5' : 'linear-gradient(135deg,#0d4a3a,#2eb87a)',
+            color: loading ? '#065f46' : 'white',
+            fontWeight:700, fontSize:16, fontFamily:'sans-serif',
             boxShadow: loading ? 'none' : '0 6px 20px rgba(13,74,58,0.35)',
+            transition:'all 0.2s',
           }}>
-            {loading ? '⏳ Connexion en cours...' : '🔐 Se connecter'}
+            {loading ? (
+              <span style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
+                <span style={{ width:18, height:18, border:'2.5px solid #065f46', borderTopColor:'transparent', borderRadius:'50%', display:'inline-block', animation:'spin 0.7s linear infinite' }} />
+                Connexion en cours...
+              </span>
+            ) : '🔐 Se connecter'}
           </button>
         </form>
 
         <p style={{ textAlign:'center', marginTop:20, fontSize:13, color:'#888', fontFamily:'sans-serif' }}>
           Pas encore de compte ?{' '}
-          <Link href="/inscription" style={{ color:'#0d4a3a', fontWeight:700, textDecoration:'none' }}>Créer un compte gratuit</Link>
+          <Link href="/inscription" style={{ color:'#0d4a3a', fontWeight:700, textDecoration:'none' }}>
+            Créer un compte gratuit
+          </Link>
         </p>
       </div>
 
-      {/* Numéros urgence corrects Cameroun */}
+      {/* Numéros urgence */}
       <div style={{ marginTop:20, background:'rgba(185,28,28,0.85)', backdropFilter:'blur(10px)', borderRadius:18, padding:'14px 20px', width:'100%', maxWidth:400 }}>
         <p style={{ color:'white', fontWeight:700, fontSize:12, fontFamily:'sans-serif', margin:'0 0 10px', textAlign:'center', letterSpacing:0.5 }}>🚨 URGENCES CAMEROUN — APPELS GRATUITS</p>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
@@ -93,7 +121,24 @@ export default function ConnexionPage() {
         </div>
       </div>
 
-      <Link href="/" style={{ color:'rgba(255,255,255,0.4)', fontSize:12, fontFamily:'sans-serif', textDecoration:'none', marginTop:16 }}>← Retour à l&apos;accueil</Link>
+      <Link href="/" style={{ color:'rgba(255,255,255,0.4)', fontSize:12, fontFamily:'sans-serif', textDecoration:'none', marginTop:16 }}>
+        ← Retour à l&apos;accueil
+      </Link>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
+  )
+}
+
+export default function ConnexionPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight:'100vh', background:'linear-gradient(160deg,#0a2e22,#0d4a3a)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ width:40, height:40, border:'3px solid rgba(255,255,255,0.2)', borderTopColor:'white', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    }>
+      <ConnexionForm />
+    </Suspense>
   )
 }
