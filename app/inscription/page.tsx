@@ -37,12 +37,26 @@ export default function InscriptionPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email, password,
       options: { data: { full_name: fullName, user_type: role, phone, gender } }
     })
     if (error) { setError(error.message); setLoading(false) }
     else {
+      // Créer le profil via API sécurisée (évite les problèmes RLS)
+      if (signUpData.user) {
+        try {
+          await fetch('/api/create-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: signUpData.user.id,
+              email, fullName, userType: role, phone, gender, city: '',
+              accessToken: signUpData.session?.access_token || ''
+            })
+          })
+        } catch(e) { /* non bloquant */ }
+      }
       // Envoyer email de bienvenue via Resend
       try {
         await fetch('/api/emails/welcome', {
