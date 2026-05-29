@@ -17,7 +17,7 @@ export default function ProfilPage() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
       if (!user) { router.push('/connexion'); return }
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       const { data: s } = await supabase.from('subscriptions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single()

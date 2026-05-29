@@ -18,7 +18,7 @@ export default function SanteFeministePage() {
 
   useEffect(() => {
     const sb = createClient()
-    sb.auth.getUser().then(async ({ data: { user } }) => {
+    sb.auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
       if (!user) { router.push('/connexion'); return }
       setUser(user)
       const { data } = await sb.from('menstrual_cycles').select('*').eq('user_id', user.id).order('cycle_start', { ascending: false }).limit(12)

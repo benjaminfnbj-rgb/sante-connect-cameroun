@@ -1,41 +1,19 @@
 // @ts-nocheck
 'use client'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useAuth } from '@/lib/hooks/useAuth'
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState(null)
-  const [subscription, setSubscription] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { profile, subscription, loading, signOut: handleLogout } = useAuth()
   const [greeting, setGreeting] = useState('Bonjour')
-  const router = useRouter()
 
   useEffect(() => {
     const h = new Date().getHours()
     if (h < 12) setGreeting('Bonjour')
     else if (h < 18) setGreeting('Bon après-midi')
     else setGreeting('Bonsoir')
-
-    const sb = createClient()
-    sb.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { router.push('/connexion'); return }
-      const [{ data: p }, { data: s }] = await Promise.all([
-        sb.from('profiles').select('*').eq('id', user.id).single(),
-        sb.from('subscriptions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single()
-      ])
-      setProfile(p)
-      setSubscription(s)
-      setLoading(false)
-    })
-  }, [router])
-
-  const handleLogout = async () => {
-    const sb = createClient()
-    await sb.auth.signOut()
-    router.push('/')
-  }
+  }, [])
 
   if (loading) return (
     <div style={{ minHeight:'100vh', background:'#f8f9fa', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16 }}>

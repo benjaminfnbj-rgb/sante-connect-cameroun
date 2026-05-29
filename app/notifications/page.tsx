@@ -11,7 +11,7 @@ export default function NotificationsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
       if (!user) { router.push('/connexion'); return }
       const { data } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30)
       setNotifs(data || [])

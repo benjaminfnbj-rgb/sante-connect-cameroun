@@ -15,7 +15,7 @@ export default function KitSantePage() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
       if (!user) { router.push('/connexion'); return }
       const [{ data: p }, { data: s }, { data: w }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
