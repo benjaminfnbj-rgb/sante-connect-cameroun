@@ -1,534 +1,439 @@
 // @ts-nocheck
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 
-// ─── Calendrier OMS des visites prénatales recommandées ─────────────────────
-const PRENATAL_SCHEDULE = [
-  { week: 8,  type: 'consultation', label: '1ère consultation prénatale', icon: '🩺', desc: 'Bilan complet, groupage sanguin, sérologies', required: true },
-  { week: 12, type: 'echo',         label: 'Échographie 1er trimestre',   icon: '🔬', desc: 'Mesure clarté nucale, datation de grossesse', required: true },
-  { week: 16, type: 'consultation', label: '2ème consultation prénatale',  icon: '🩺', desc: 'Contrôle tension, poids, hauteur utérine', required: true },
-  { week: 20, type: 'consultation', label: '3ème consultation prénatale',  icon: '🩺', desc: 'Contrôle de routine', required: true },
-  { week: 22, type: 'echo',         label: 'Échographie morphologique',    icon: '🔬', desc: 'Morphologie fœtale complète, sexe', required: true },
-  { week: 24, type: 'labo',         label: 'Test diabète gestationnel',    icon: '🧪', desc: 'Glycémie à jeun, test HGPO', required: true },
-  { week: 28, type: 'consultation', label: '4ème consultation prénatale',  icon: '🩺', desc: 'Contrôle, préparation accouchement', required: true },
-  { week: 28, type: 'vaccin',       label: 'Vaccin Tétanos (rappel)',       icon: '💉', desc: 'Immunisation tétanos pour la mère', required: true },
-  { week: 32, type: 'echo',         label: 'Échographie 3ème trimestre',   icon: '🔬', desc: 'Croissance fœtale, position, liquide amniotique', required: true },
-  { week: 32, type: 'consultation', label: '5ème consultation prénatale',  icon: '🩺', desc: 'Préparation accouchement, plan de naissance', required: true },
-  { week: 36, type: 'consultation', label: '6ème consultation prénatale',  icon: '🩺', desc: 'Position bébé, bassin maternel', required: true },
-  { week: 38, type: 'consultation', label: '7ème consultation prénatale',  icon: '🩺', desc: 'Surveillance rapprochée', required: true },
-  { week: 40, type: 'consultation', label: '8ème consultation (terme)',     icon: '🩺', desc: 'Si pas d\'accouchement, surveillance', required: false },
+// ─── Données CPN Cameroun (OMS / MINSANTÉ) ───────────────────────────────────
+const CPN_DATA = [
+  {
+    numero: 'CPN 1',
+    semaines: 'S8 – S12',
+    trimestre: 1,
+    examens: [
+      { nom: 'Bilan sanguin complet (NFS)', objectif: 'Détecter une anémie, trouble de coagulation' },
+      { nom: 'Groupage sanguin + Rhésus', objectif: 'Identifier incompatibilité rhésus mère/bébé' },
+      { nom: 'Sérologie VIH', objectif: 'Prévenir la transmission mère-enfant (PTME)' },
+      { nom: 'Sérologie syphilis (TPHA/VDRL)', objectif: 'Dépister syphilis pouvant causer fausse couche ou malformations' },
+      { nom: 'Sérologie hépatite B', objectif: 'Protéger le nouveau-né à la naissance' },
+      { nom: 'Sérologie rubéole / toxoplasmose', objectif: 'Évaluer immunité et risque fœtal' },
+      { nom: 'Glycémie à jeun', objectif: 'Dépistage précoce du diabète gestationnel' },
+      { nom: 'ECBU (bactériologie urinaire)', objectif: 'Détecter infection urinaire silencieuse risquant l\'accouchement prématuré' },
+      { nom: 'Prise de tension artérielle', objectif: 'Référence de base, dépistage hypertension' },
+      { nom: 'Prise du poids', objectif: 'Référence pour suivi de prise de poids gestationnel' },
+      { nom: 'Échographie de datation', objectif: 'Confirmer âge gestationnel, vitalité fœtale, nombre d\'embryons' },
+    ],
+    conseils: 'Commencer l\'acide folique (0,4 mg/j), arrêter alcool/tabac, prendre le carnet de santé.',
+  },
+  {
+    numero: 'CPN 2',
+    semaines: 'S16 – S20',
+    trimestre: 1,
+    examens: [
+      { nom: 'Mesure hauteur utérine (HU)', objectif: 'Évaluer croissance fœtale (HU en cm ≈ semaine d\'aménorrhée)' },
+      { nom: 'Auscultation bruits du cœur fœtal (BCF)', objectif: 'Confirmer vitalité fœtale' },
+      { nom: 'Contrôle tension artérielle + poids', objectif: 'Dépistage précoce pré-éclampsie' },
+      { nom: 'Recherche albumine dans les urines (bandelette)', objectif: 'Signe d\'alerte d\'une pré-éclampsie' },
+      { nom: 'NFS de contrôle', objectif: 'Suivi anémie et efficacité supplémentation en fer' },
+      { nom: 'Échographie morphologique (S22)', objectif: 'Dépistage malformations fœtales, sexe, position placenta' },
+      { nom: 'Vaccin VAT 1 (Tétanos)', objectif: 'Immunisation contre le tétanos néonatal' },
+    ],
+    conseils: 'Commencer le fer (30 mg/j) et le calcium. Manger varié et équilibré.',
+  },
+  {
+    numero: 'CPN 3',
+    semaines: 'S28 – S32',
+    trimestre: 3,
+    examens: [
+      { nom: 'Mesure hauteur utérine + BCF', objectif: 'Surveiller croissance et bien-être fœtal' },
+      { nom: 'Contrôle TA + poids + albuminurie', objectif: 'Dépistage pré-éclampsie (risque maximal 3e trimestre)' },
+      { nom: 'Test de tolérance au glucose (HGPO 75g)', objectif: 'Diagnostic définitif diabète gestationnel' },
+      { nom: 'NFS + ferritine', objectif: 'Contrôle anémie en fin de grossesse' },
+      { nom: 'Sérologie VIH de contrôle', objectif: 'Dépistage tardif, prévenir contamination à l\'accouchement' },
+      { nom: 'Présentation fœtale (palper abdominal)', objectif: 'Vérifier si bébé est en position céphalique (tête en bas)' },
+      { nom: 'Échographie 3e trimestre (S32–S34)', objectif: 'Croissance fœtale, quantité liquide amniotique, position placenta' },
+      { nom: 'Vaccin VAT 2 (rappel tétanos)', objectif: 'Renforcement immunité, protège le nouveau-né' },
+    ],
+    conseils: 'Compter les mouvements fœtaux (≥ 10/jour). Préparer la valise de maternité.',
+  },
+  {
+    numero: 'CPN 4',
+    semaines: 'S36 – S38',
+    trimestre: 3,
+    examens: [
+      { nom: 'Bilan complet pré-accouchement', objectif: 'Préparer prise en charge accouchement (groupe, rhésus, coagulation)' },
+      { nom: 'Mesure bassin (pelvimétrie si nécessaire)', objectif: 'Évaluer faisabilité accouchement voie basse' },
+      { nom: 'Vérification présentation fœtale', objectif: 'Confirmer position tête en bas, sinon orienter vers césarienne' },
+      { nom: 'Contrôle TA + poids + albuminurie', objectif: 'Surveillance rapprochée hypertension gravidique' },
+      { nom: 'Évaluation col utérin (toucher vaginal)', objectif: 'Apprécier maturité cervicale et imminence du travail' },
+      { nom: 'Plan d\'accouchement', objectif: 'Orienter vers maternité adaptée, prévoir transport d\'urgence' },
+    ],
+    conseils: 'Rester proche d\'une maternité. Identifier un accompagnant et moyen de transport 24h/24.',
+  },
 ]
 
-const WEEK_TIPS: Record<number, { title: string; tips: string[] }> = {
-  4:  { title: 'Semaine 4 — Début de grossesse', tips: ['Arrêtez l\'alcool et le tabac immédiatement', 'Commencez la supplémentation en acide folique', 'Consultez un médecin dès que possible'] },
-  8:  { title: 'Semaine 8 — Embryon visible', tips: ['Le cœur bat déjà !', 'Prenez votre première consultation prénatale', 'Mangez des aliments riches en fer : viande, haricots, légumes verts', 'Reposez-vous, la fatigue est normale'] },
-  12: { title: 'Semaine 12 — Fin du 1er trimestre', tips: ['Risque de fausse couche diminue fortement', 'Passez votre échographie du 1er trimestre', 'Les nausées commencent généralement à s\'atténuer', 'Annoncez votre grossesse si vous le souhaitez'] },
-  16: { title: 'Semaine 16 — 2ème trimestre', tips: ['Vous pouvez peut-être sentir bébé bouger', 'Continuez les suppléments de fer et calcium', 'Hydratez-vous bien : 1,5L d\'eau par jour minimum', 'Dormez sur le côté gauche pour une meilleure circulation'] },
-  20: { title: 'Semaine 20 — Mi-grossesse', tips: ['Bébé entend votre voix maintenant', 'Préparez votre liste pour la valise de maternité', 'Évitez de porter des charges lourdes', 'Continuez votre activité physique légère si possible'] },
-  24: { title: 'Semaine 24 — Bébé viable', tips: ['Faites le test du diabète gestationnel', 'Surveillez les mouvements du bébé', 'Préparez votre plan de naissance', 'Inscrivez-vous aux cours de préparation à l\'accouchement'] },
-  28: { title: 'Semaine 28 — 3ème trimestre', tips: ['Vaccin tétanos recommandé maintenant', 'Comptez les mouvements fœtaux : au moins 10 par jour', 'Surveillez tout gonflement excessif des pieds', 'Commencez à préparer la chambre de bébé'] },
-  32: { title: 'Semaine 32 — Préparation finale', tips: ['Bébé est en position de plus en plus stable', 'Préparez votre valise de maternité', 'Apprenez les signes du travail', 'Repérez l\'itinéraire vers la maternité'] },
-  36: { title: 'Semaine 36 — Quasi prêt !', tips: ['Bébé devrait être en position tête en bas', 'Restez près de la maternité', 'Surveillez tout signe de travail prématuré', 'Reposez-vous le plus possible'] },
-  40: { title: 'Semaine 40 — Terme !', tips: ['Le travail peut commencer à tout moment', 'Appelez votre médecin dès les premières contractions', 'Urgence : appelez le 119 si douleurs intenses', 'Faites confiance à votre corps'] },
-}
+// ─── Signes de danger ─────────────────────────────────────────────────────────
+const SIGNES_DANGER = [
+  {
+    titre: 'Saignements vaginaux',
+    icon: '🩸',
+    color: '#dc2626',
+    bg: '#fef2f2',
+    urgence: true,
+    desc: 'À n\'importe quel moment de la grossesse, tout saignement doit être signalé IMMÉDIATEMENT.',
+    cat: '→ Fausse couche, placenta prævia, hématome rétroplacentaire.',
+    cat2: '🚨 Se rendre en urgence à la maternité.',
+  },
+  {
+    titre: 'Hypertension / Pré-éclampsie',
+    icon: '💓',
+    color: '#dc2626',
+    bg: '#fef2f2',
+    urgence: true,
+    desc: 'TA ≥ 140/90 mmHg après 20 SA + œdèmes + albumine dans les urines.',
+    cat: '→ Convulsions (éclampsie), risque vital mère et bébé.',
+    cat2: '🚨 Hospitalisation immédiate obligatoire.',
+  },
+  {
+    titre: 'Contractions avant 37 semaines',
+    icon: '⚡',
+    color: '#d97706',
+    bg: '#fffbeb',
+    urgence: true,
+    desc: 'Contractions régulières et douloureuses avant le terme = menace d\'accouchement prématuré.',
+    cat: '→ Bébé prématuré, complications respiratoires.',
+    cat2: '🚨 Consulter en urgence pour tocolyse (médicaments stoppant le travail).',
+  },
+  {
+    titre: 'Absence de mouvements fœtaux',
+    icon: '👶',
+    color: '#dc2626',
+    bg: '#fef2f2',
+    urgence: true,
+    desc: 'Le bébé doit bouger ≥ 10 fois/jour après 28 SA. Moins de 10 mouvements en 12h = alarme.',
+    cat: '→ Souffrance fœtale, mort fœtale in utero.',
+    cat2: '🚨 Aller en urgence pour monitorage du rythme cardiaque fœtal (CTG).',
+  },
+  {
+    titre: 'Perte de liquide amniotique',
+    icon: '💧',
+    color: '#1d4ed8',
+    bg: '#eff6ff',
+    urgence: true,
+    desc: 'Écoulement soudain de liquide clair (rupture prématurée des membranes = RPM).',
+    cat: '→ Infection fœtale (chorioamniotite), cordon procident.',
+    cat2: '🚨 Maternité immédiatement, ne pas attendre les contractions.',
+  },
+  {
+    titre: 'Maux de tête violents + vision trouble',
+    icon: '🤕',
+    color: '#dc2626',
+    bg: '#fef2f2',
+    urgence: true,
+    desc: 'Associés à des phosphènes (éclairs lumineux) = signe de pré-éclampsie sévère.',
+    cat: '→ Risque de crise convulsive (éclampsie).',
+    cat2: '🚨 Urgence vitale — appeler le 119.',
+  },
+  {
+    titre: 'Fièvre ≥ 38°C',
+    icon: '🌡️',
+    color: '#d97706',
+    bg: '#fffbeb',
+    urgence: false,
+    desc: 'Toute fièvre pendant la grossesse doit être prise au sérieux.',
+    cat: '→ Infection urinaire, paludisme, listériose, toxoplasmose.',
+    cat2: '⚠️ Consulter rapidement sans automédication.',
+  },
+  {
+    titre: 'Douleurs épigastriques (creux de l\'estomac)',
+    icon: '😣',
+    color: '#d97706',
+    bg: '#fffbeb',
+    urgence: true,
+    desc: 'Douleur en barre sous les côtes droites = signe du syndrome HELLP (complication sévère).',
+    cat: '→ Destruction des globules rouges, atteinte hépatique.',
+    cat2: '🚨 Hospitalisation immédiate.',
+  },
+]
 
-function getClosestTip(week: number) {
-  const keys = Object.keys(WEEK_TIPS).map(Number).sort((a,b)=>a-b)
-  const closest = keys.filter(k => k <= week).pop() || keys[0]
-  return WEEK_TIPS[closest]
-}
+// ─── Alimentation ─────────────────────────────────────────────────────────────
+const ALIMENTS_POUR = [
+  { cat: '🥩 Protéines', items: ['Viande bien cuite (poulet, bœuf, poisson)', 'Œufs bien cuits', 'Légumineuses : niébé, arachides, haricots', 'Lait et produits laitiers pasteurisés'] },
+  { cat: '🥬 Légumes & Fruits', items: ['Légumes verts feuillus : ndolé, légumes-feuilles', 'Patate douce, manioc, banane plantain', 'Mangue, papaye, citron (vitamine C)', 'Tout légume bien lavé et cuit'] },
+  { cat: '🌾 Féculents & Énergie', items: ['Riz, maïs, igname, macabo', 'Mil, sorgho, pain complet', 'Huile de palme (avec modération)'] },
+  { cat: '💊 Suppléments essentiels', items: ['Acide folique 0,4 mg/j (dès la conception → S12)', 'Fer 30–60 mg/j (prévient anémie)', 'Calcium 1 000 mg/j (os du bébé)', 'Vitamine D (absorption calcium)', 'Iode (développement cérébral du bébé)'] },
+]
 
-const TYPE_COLORS = {
-  consultation: { bg:'#e8f5ee', color:'#0d4a3a', border:'#86efac' },
-  echo:         { bg:'#eff6ff', color:'#1d4ed8', border:'#bfdbfe' },
-  labo:         { bg:'#fef9ee', color:'#b45309', border:'#fde68a' },
-  vaccin:       { bg:'#f5f3ff', color:'#7c3aed', border:'#ddd6fe' },
-}
+const ALIMENTS_CONTRE = [
+  { icon:'🍺', label:'Alcool (aucune dose sûre)', desc:'Syndrome d\'alcoolisation fœtale, malformations cérébrales graves' },
+  { icon:'🚬', label:'Tabac et drogues', desc:'Retard de croissance fœtale, fausse couche, mort subite du nourrisson' },
+  { icon:'🐟', label:'Poisson cru (sashimi, sushi)', desc:'Risque listériose, anisakiase, contamination mercure' },
+  { icon:'🥩', label:'Viande rouge/volaille crue ou saignante', desc:'Toxoplasmose, salmonellose — cuire à cœur' },
+  { icon:'🧀', label:'Fromages à pâte molle non pasteurisés', desc:'Listériose pouvant provoquer mort fœtale in utero' },
+  { icon:'🥚', label:'Œufs crus (mayonnaise maison)', desc:'Salmonellose' },
+  { icon:'🌿', label:'Plantes médicinales non validées', desc:'Risque de contractions utérines, avortement spontané' },
+  { icon:'💊', label:'Automédication (ibuprofène, aspirine)', desc:'Fermeture prématurée du canal artériel, saignements' },
+  { icon:'☕', label:'Caféine excessive (> 200 mg/j)', desc:'Retard de croissance, fausse couche. Limiter à 1 café/jour' },
+  { icon:'🥫', label:'Conserves industrielles, charcuterie', desc:'Risque listériose, excès sel aggravant hypertension' },
+]
+
+// ─── Hygiène & Conseils généraux ─────────────────────────────────────────────
+const HYGIENE = [
+  { icon:'💧', title:'Hydratation', desc:'Boire 1,5 à 2 litres d\'eau par jour. L\'eau bouillie ou en bouteille est recommandée.' },
+  { icon:'🚿', title:'Hygiène corporelle', desc:'Toilette quotidienne. Éviter les bains trop chauds (risque d\'hyperthermie fœtale). Pas de douche vaginale.' },
+  { icon:'🦟', title:'Prévention paludisme', desc:'Utiliser moustiquaire imprégnée chaque nuit. La chimioprophylaxie à la sulfadoxine-pyriméthamine (SP) est recommandée au Cameroun à chaque CPN à partir du 2e trimestre.' },
+  { icon:'🚶‍♀️', title:'Activité physique', desc:'Marche 30 min/jour recommandée. Éviter efforts intenses, sports de contact, positions allongées sur le dos après 20 SA.' },
+  { icon:'😴', title:'Repos', desc:'Dormir sur le côté gauche favorise la circulation placentaire. Minimum 8h de sommeil. Éviter le stress intense.' },
+  { icon:'🦷', title:'Santé dentaire', desc:'Consulter un dentiste. Les hormones favorisent les caries et gingivites qui peuvent déclencher un accouchement prématuré.' },
+  { icon:'🐈', title:'Éviter les chats (litière)', desc:'Les excréments de chats peuvent transmettre la toxoplasmose, dangereuse pour le fœtus.' },
+  { icon:'🧪', title:'Produits chimiques', desc:'Éviter peintures, pesticides, produits ménagers agressifs sans ventilation. Porter des gants si nécessaire.' },
+]
 
 export default function GrossessePage() {
-  const [user, setUser] = useState(null)
-  const [subscription, setSubscription] = useState(null)
-  const [pregnancy, setPregnancy] = useState(null)
-  const [visits, setVisits] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'home'|'visits'|'vaccins'|'conseils'>('home')
-  // Setup grossesse
-  const [showSetup, setShowSetup] = useState(false)
-  const [setupDate, setSetupDate] = useState('')
-  const [setupDoctor, setSetupDoctor] = useState('')
-  const [setupClinic, setSetupClinic] = useState('')
-  const [setupBlood, setSetupBlood] = useState('')
-  const [setupSaving, setSetupSaving] = useState(false)
-  // Ajouter visite
-  const [showAddVisit, setShowAddVisit] = useState(false)
-  const [visitDate, setVisitDate] = useState('')
-  const [visitType, setVisitType] = useState('consultation')
-  const [visitDoctor, setVisitDoctor] = useState('')
-  const [visitClinic, setVisitClinic] = useState('')
-  const [visitWeight, setVisitWeight] = useState('')
-  const [visitBP, setVisitBP] = useState('')
-  const [visitBPM, setVisitBPM] = useState('')
-  const [visitNotes, setVisitNotes] = useState('')
-  const [visitNext, setVisitNext] = useState('')
-  const [visitSaving, setVisitSaving] = useState(false)
-  const router = useRouter()
+  const [tab, setTab] = useState<'cpn'|'danger'|'nutrition'|'hygiene'>('cpn')
+  const [expandedCPN, setExpandedCPN] = useState<number | null>(0)
 
-  useEffect(() => {
-    const sb = createClient()
-    sb.auth.getSession().then(async ({data:{session}}) => {
-      if (!session) { router.push('/connexion'); return }
-      setUser(session.user)
-      const [{data:sub},{data:preg},{data:vis}] = await Promise.all([
-        sb.from('subscriptions').select('plan,status').eq('user_id',session.user.id).single(),
-        sb.from('pregnancy_tracking').select('*').eq('user_id',session.user.id).single(),
-        sb.from('prenatal_visits').select('*').eq('user_id',session.user.id).order('visit_date',{ascending:true})
-      ])
-      setSubscription(sub)
-      setPregnancy(preg)
-      setVisits(vis||[])
-      setLoading(false)
-    })
-  }, [router])
-
-  const calcWeek = (lmpDate: string) => {
-    const days = Math.round((Date.now() - new Date(lmpDate).getTime()) / 864e5)
-    return Math.min(Math.max(Math.floor(days/7), 1), 42)
-  }
-
-  const calcEDB = (lmpDate: string) => {
-    const edb = new Date(new Date(lmpDate).getTime() + 280 * 864e5)
-    return edb
-  }
-
-  const saveSetup = async () => {
-    if (!setupDate) return
-    setSetupSaving(true)
-    const sb = createClient()
-    const edb = calcEDB(setupDate)
-    const {data,error} = await sb.from('pregnancy_tracking').upsert({
-      user_id: user.id,
-      last_period_date: setupDate,
-      expected_birth_date: edb.toISOString().split('T')[0],
-      current_week: calcWeek(setupDate),
-      doctor_name: setupDoctor || null,
-      clinic_name: setupClinic || null,
-      blood_type: setupBlood || null,
-    },{onConflict:'user_id'}).select().single()
-    if (!error) { setPregnancy(data); setShowSetup(false) }
-    setSetupSaving(false)
-  }
-
-  const saveVisit = async () => {
-    if (!visitDate) return
-    setVisitSaving(true)
-    const sb = createClient()
-    const week = pregnancy ? calcWeek(pregnancy.last_period_date) : null
-    const {data,error} = await sb.from('prenatal_visits').insert({
-      user_id: user.id, visit_date: visitDate, visit_type: visitType,
-      week_of_pregnancy: week, doctor_name: visitDoctor||null,
-      clinic_name: visitClinic||null, weight: visitWeight||null,
-      blood_pressure: visitBP||null, baby_heartbeat: visitBPM||null,
-      notes: visitNotes||null, next_visit_date: visitNext||null, is_done: true,
-    }).select().single()
-    if (!error&&data) {
-      setVisits(p=>[...p,data].sort((a,b)=>new Date(a.visit_date).getTime()-new Date(b.visit_date).getTime()))
-      setShowAddVisit(false)
-      setVisitDate(''); setVisitType('consultation'); setVisitDoctor(''); setVisitClinic('')
-      setVisitWeight(''); setVisitBP(''); setVisitBPM(''); setVisitNotes(''); setVisitNext('')
-    }
-    setVisitSaving(false)
-  }
-
-  const fmtDate = (d:string|Date) => new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})
-  const today = new Date().toISOString().split('T')[0]
-
-  if (loading) return (
-    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#fdf6ee'}}>
-      <div style={{width:36,height:36,borderRadius:'50%',border:'3px solid #fde68a',borderTopColor:'#d97706',animation:'spin .8s linear infinite'}}/>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  )
-
-  // Vérifier accès au forfait grossesse
-  if (subscription?.plan !== 'pregnancy') {
-    return (
-      <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#92400e,#d97706,#f59e0b)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-        <div style={{background:'white',borderRadius:28,padding:'36px 24px',maxWidth:400,width:'100%',textAlign:'center',boxShadow:'0 24px 60px rgba(0,0,0,0.2)'}}>
-          <div style={{fontSize:52,marginBottom:16}}>🤰</div>
-          <h2 style={{color:'#92400e',fontFamily:'Georgia,serif',fontSize:20,margin:'0 0 10px'}}>Suivi de Grossesse</h2>
-          <div style={{background:'linear-gradient(135deg,#fffbeb,#fef3c7)',borderRadius:16,padding:'16px',marginBottom:16,border:'1px solid #fde68a'}}>
-            <div style={{color:'#92400e',fontWeight:800,fontSize:22,marginBottom:4}}>3 000 FCFA <span style={{fontSize:13,fontWeight:400}}>/mois</span></div>
-            <div style={{color:'#78350f',fontSize:12,lineHeight:1.6}}>Forfait exclusif pour les femmes enceintes</div>
-          </div>
-          <div style={{textAlign:'left',marginBottom:20}}>
-            {[
-              '🩺 Suivi des consultations prénatales',
-              '💉 Calendrier des vaccins obligatoires',
-              '🔬 Suivi échographies et labos',
-              '📊 Courbe de grossesse semaine/semaine',
-              '💡 Conseils médicaux personnalisés',
-              '🏥 Orientation vers maternités partenaires',
-              '🌸 Accès complet à la Santé Féminine',
-              '🛡️ Accès à l\'Espace Assurances',
-            ].map((f,i)=>(
-              <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:7,fontSize:13,color:'#555'}}>
-                <span>{f}</span>
-              </div>
-            ))}
-          </div>
-          <Link href="/tarifs" style={{display:'block',background:'linear-gradient(135deg,#d97706,#f59e0b)',color:'white',borderRadius:50,padding:'14px',fontWeight:700,textDecoration:'none',fontSize:14,boxShadow:'0 4px 14px rgba(217,119,6,0.4)'}}>
-            Souscrire au Forfait Grossesse →
-          </Link>
-          <Link href="/dashboard" style={{display:'block',marginTop:12,color:'#aaa',fontSize:12,textDecoration:'none'}}>← Retour au tableau de bord</Link>
-        </div>
-      </div>
-    )
-  }
-
-  const currentWeek = pregnancy ? calcWeek(pregnancy.last_period_date) : 0
-  const edb = pregnancy ? calcEDB(pregnancy.last_period_date) : null
-  const daysLeft = edb ? Math.max(0, Math.round((edb.getTime()-Date.now())/864e5)) : null
-  const trimester = currentWeek <= 13 ? 1 : currentWeek <= 26 ? 2 : 3
-  const tip = pregnancy ? getClosestTip(currentWeek) : null
-
-  // Visites planifiées et faites
-  const doneVisitWeeks = new Set(visits.map(v=>v.week_of_pregnancy))
-  const pendingVisits = PRENATAL_SCHEDULE.filter(s => s.week >= currentWeek - 1 && s.week <= currentWeek + 8)
-  const vaccins = PRENATAL_SCHEDULE.filter(s => s.type === 'vaccin')
-  const doneVaccins = visits.filter(v => v.visit_type === 'vaccin')
-
-  const inp: React.CSSProperties = {width:'100%',padding:'10px 12px',borderRadius:10,border:'1.5px solid #fde68a',fontSize:13,outline:'none',boxSizing:'border-box',marginBottom:10,fontFamily:'sans-serif'}
-  const lbl: React.CSSProperties = {display:'block',fontWeight:700,color:'#92400e',fontSize:11,marginBottom:5}
+  const TABS = [
+    { id:'cpn',      icon:'📋', label:'Calendrier CPN' },
+    { id:'danger',   icon:'🚨', label:'Signes danger' },
+    { id:'nutrition',icon:'🥗', label:'Nutrition' },
+    { id:'hygiene',  icon:'💡', label:'Conseils' },
+  ]
 
   return (
-    <div style={{minHeight:'100vh',background:'#fdf6ee',fontFamily:'sans-serif',paddingBottom:70}}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
+    <div style={{ minHeight:'100vh', background:'#fdf6ee', fontFamily:'sans-serif', paddingBottom:80 }}>
+      <style>{`
+        @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .row:active { opacity:0.8; }
+      `}</style>
 
       {/* ── HEADER ── */}
-      <div style={{background:'linear-gradient(160deg,#92400e,#d97706)',padding:'14px 16px 16px'}}>
-        <div style={{display:'flex',alignItems:'center',gap:12,maxWidth:520,margin:'0 auto'}}>
-          <Link href="/dashboard" style={{color:'rgba(255,255,255,0.7)',textDecoration:'none',fontSize:13,flexShrink:0}}>← Retour</Link>
-          <div style={{flex:1,textAlign:'center'}}>
-            <div style={{color:'white',fontFamily:'Georgia,serif',fontSize:17,fontWeight:700}}>🤰 Suivi de Grossesse</div>
-            {pregnancy && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11,marginTop:2}}>Semaine {currentWeek} · Trimestre {trimester}</div>}
+      <div style={{ background:'linear-gradient(160deg,#78350f,#d97706)', padding:'14px 16px 18px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12, maxWidth:560, margin:'0 auto' }}>
+          <Link href="/dashboard" style={{ color:'rgba(255,255,255,0.7)', textDecoration:'none', fontSize:13, flexShrink:0 }}>← Retour</Link>
+          <div style={{ flex:1, textAlign:'center' }}>
+            <div style={{ color:'white', fontFamily:'Georgia,serif', fontSize:17, fontWeight:700 }}>🤰 Suivi de Grossesse</div>
+            <div style={{ color:'rgba(255,255,255,0.7)', fontSize:11, marginTop:2 }}>Guide éducatif santé maternelle & fœtale</div>
           </div>
-          <button onClick={()=>setShowSetup(true)} style={{background:'rgba(255,255,255,0.15)',border:'none',borderRadius:10,padding:'6px 10px',cursor:'pointer',color:'white',fontSize:11,fontWeight:700,flexShrink:0}}>
-            ✏️ Modifier
-          </button>
+          <div style={{ width:48 }} />
         </div>
+      </div>
+
+      {/* ── BANDEAU DISCLAIMER ── */}
+      <div style={{ background:'#fffbeb', borderBottom:'1px solid #fde68a', padding:'8px 16px' }}>
+        <p style={{ color:'#92400e', fontSize:11, margin:0, textAlign:'center', lineHeight:1.5 }}>
+          ⚕️ <strong>Informations éducatives uniquement.</strong> Pour tout suivi médical, consultez un(e) sage-femme, médecin ou gynécologue.
+        </p>
       </div>
 
       {/* ── TABS ── */}
-      <div style={{background:'white',borderBottom:'1px solid #fde68a',display:'grid',gridTemplateColumns:'repeat(4,1fr)'}}>
-        {[['home','🏠','Accueil'],['visits','📋','Visites'],['vaccins','💉','Vaccins'],['conseils','💡','Conseils']].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>setTab(id as any)} style={{padding:'10px 4px',border:'none',background:'transparent',cursor:'pointer',color:tab===id?'#d97706':'#aaa',fontWeight:tab===id?700:400,fontSize:10,borderBottom:tab===id?'2.5px solid #d97706':'2.5px solid transparent',display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
-            <span style={{fontSize:17}}>{icon}</span><span>{label}</span>
+      <div style={{ background:'white', borderBottom:'1px solid #fde68a', display:'grid', gridTemplateColumns:'repeat(4,1fr)', position:'sticky', top:0, zIndex:40 }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id as any)} style={{ padding:'10px 4px', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#d97706':'#aaa', fontWeight:tab===t.id?700:400, fontSize:10, borderBottom:tab===t.id?'2.5px solid #d97706':'2.5px solid transparent', display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+            <span style={{ fontSize:16 }}>{t.icon}</span>
+            <span style={{ lineHeight:1.2, textAlign:'center' }}>{t.label}</span>
           </button>
         ))}
       </div>
 
-      {/* ── SETUP MODAL ── */}
-      {(showSetup || !pregnancy) && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={()=>pregnancy&&setShowSetup(false)}>
-          <div style={{background:'white',borderRadius:'24px 24px 0 0',padding:'24px 20px 32px',width:'100%',maxWidth:500}} onClick={e=>e.stopPropagation()}>
-            <h3 style={{color:'#92400e',fontFamily:'Georgia,serif',fontSize:17,margin:'0 0 6px'}}>🤰 {pregnancy?'Modifier ma grossesse':'Commencer le suivi'}</h3>
-            <p style={{color:'#888',fontSize:12,margin:'0 0 16px'}}>Date de vos dernières règles pour calculer votre terme et semaine.</p>
-            <label style={lbl}>Date des dernières règles (DDR) *</label>
-            <input type="date" value={setupDate} max={today} onChange={e=>setSetupDate(e.target.value)} style={inp}/>
-            {setupDate && (
-              <div style={{background:'#fffbeb',border:'1px solid #fde68a',borderRadius:10,padding:'10px 14px',marginBottom:10}}>
-                <div style={{color:'#92400e',fontWeight:700,fontSize:13}}>Semaine {calcWeek(setupDate)} de grossesse</div>
-                <div style={{color:'#aaa',fontSize:11}}>Date prévue d'accouchement : {fmtDate(calcEDB(setupDate))}</div>
-              </div>
-            )}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-              <div>
-                <label style={lbl}>Médecin / Sage-femme</label>
-                <input style={{...inp,marginBottom:0}} value={setupDoctor} onChange={e=>setSetupDoctor(e.target.value)} placeholder="Dr. Nom..." />
-              </div>
-              <div>
-                <label style={lbl}>Groupe sanguin</label>
-                <select style={{...inp,marginBottom:0}} value={setupBlood} onChange={e=>setSetupBlood(e.target.value)}>
-                  <option value="">Inconnu</option>
-                  {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(b=><option key={b} value={b}>{b}</option>)}
-                </select>
-              </div>
+      <div style={{ maxWidth:560, margin:'0 auto', padding:'16px 14px' }}>
+
+        {/* ─── CALENDRIER CPN ─── */}
+        {tab==='cpn' && (
+          <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:12 }}>
+            <div style={{ background:'#fffbeb', border:'1px solid #fde68a', borderRadius:14, padding:'12px 14px' }}>
+              <p style={{ color:'#92400e', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>📋 Calendrier des Consultations Prénatales (CPN)</p>
+              <p style={{ color:'#78350f', fontSize:12, margin:0, lineHeight:1.6 }}>Le <strong>MINSANTÉ Cameroun</strong> et l'<strong>OMS</strong> recommandent au minimum <strong>4 CPN</strong> pour toute grossesse. Chaque consultation inclut des examens cliniques et biologiques ciblés.</p>
             </div>
-            <div style={{marginTop:10}}>
-              <label style={lbl}>Maternité / Clinique prévue</label>
-              <input style={inp} value={setupClinic} onChange={e=>setSetupClinic(e.target.value)} placeholder="Nom de la structure sanitaire..."/>
-            </div>
-            <div style={{display:'flex',gap:10}}>
-              {pregnancy&&<button onClick={()=>setShowSetup(false)} style={{flex:1,padding:'12px',borderRadius:50,border:'1.5px solid #e5e7eb',background:'white',color:'#666',fontWeight:700,cursor:'pointer',fontSize:13}}>Annuler</button>}
-              <button onClick={saveSetup} disabled={!setupDate||setupSaving} style={{flex:2,padding:'12px',borderRadius:50,border:'none',background:setupDate?'linear-gradient(135deg,#d97706,#f59e0b)':'#e5e7eb',color:setupDate?'white':'#aaa',fontWeight:700,cursor:setupDate?'pointer':'not-allowed',fontSize:13}}>
-                {setupSaving?'⏳ Enregistrement...':'✅ Commencer le suivi'}
-              </button>
+
+            {CPN_DATA.map((cpn, idx) => (
+              <div key={idx} style={{ background:'white', borderRadius:18, overflow:'hidden', boxShadow:'0 2px 10px rgba(0,0,0,0.06)' }}>
+                {/* En-tête CPN */}
+                <button className="row" onClick={() => setExpandedCPN(expandedCPN===idx ? null : idx)} style={{ width:'100%', padding:'14px 16px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
+                  <div style={{ width:44, height:44, borderRadius:14, background: cpn.trimestre===1?'#e8f5ee':cpn.trimestre===2?'#eff6ff':'#fdf2f8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0, fontWeight:700, color: cpn.trimestre===1?'#0d4a3a':cpn.trimestre===2?'#1d4ed8':'#be185d' }}>
+                    {idx+1}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:700, color:'#d97706', fontSize:14 }}>{cpn.numero}</div>
+                    <div style={{ color:'#888', fontSize:12 }}>Semaines {cpn.semaines} · T{cpn.trimestre}</div>
+                  </div>
+                  <span style={{ color:'#d97706', fontSize:18, transform: expandedCPN===idx?'rotate(90deg)':'rotate(0deg)', transition:'transform .2s' }}>›</span>
+                </button>
+
+                {expandedCPN===idx && (
+                  <div style={{ padding:'0 16px 16px', animation:'fadeUp .2s ease' }}>
+                    {/* Tableau examens */}
+                    <div style={{ border:'1px solid #fde68a', borderRadius:12, overflow:'hidden', marginBottom:12 }}>
+                      <div style={{ background:'#d97706', padding:'8px 12px', display:'grid', gridTemplateColumns:'1fr 1.2fr', gap:8 }}>
+                        <span style={{ color:'white', fontWeight:700, fontSize:11 }}>EXAMEN</span>
+                        <span style={{ color:'white', fontWeight:700, fontSize:11 }}>OBJECTIF</span>
+                      </div>
+                      {cpn.examens.map((ex, i) => (
+                        <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 1.2fr', gap:8, padding:'9px 12px', background:i%2===0?'white':'#fffbeb', borderTop:'1px solid #fde68a' }}>
+                          <div style={{ color:'#92400e', fontSize:11, fontWeight:600, lineHeight:1.4 }}>{ex.nom}</div>
+                          <div style={{ color:'#78350f', fontSize:11, lineHeight:1.4 }}>{ex.objectif}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Conseil de la visite */}
+                    <div style={{ background:'#f0fdf4', borderRadius:10, padding:'10px 12px', border:'1px solid #86efac', display:'flex', gap:8 }}>
+                      <span style={{ fontSize:14, flexShrink:0 }}>💡</span>
+                      <p style={{ color:'#14532d', fontSize:12, margin:0, lineHeight:1.5 }}>{cpn.conseils}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Note finale CPN */}
+            <div style={{ background:'#eff6ff', borderRadius:14, padding:'12px 14px', border:'1px solid #bfdbfe' }}>
+              <p style={{ color:'#1e40af', fontSize:12, margin:0, lineHeight:1.6 }}>
+                ℹ️ En cas de <strong>grossesse à risque</strong> (HTA, diabète, gémellaire, ATCD fausse couche), des consultations supplémentaires peuvent être prescrites. Suivez les recommandations de votre médecin ou sage-femme.
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div style={{maxWidth:520,margin:'0 auto',padding:'16px 14px',display:'flex',flexDirection:'column',gap:12}}>
-
-        {/* ─────── ACCUEIL ─────── */}
-        {tab==='home' && pregnancy && (
-          <div style={{animation:'fadeUp .3s ease',display:'flex',flexDirection:'column',gap:12}}>
-            {/* Progression grossesse */}
-            <div style={{background:'white',borderRadius:20,padding:'18px 18px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:'1.5px solid #fde68a'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
-                <div>
-                  <div style={{color:'#d97706',fontWeight:800,fontSize:22}}>Semaine {currentWeek}</div>
-                  <div style={{color:'#888',fontSize:12}}>Trimestre {trimester} sur 3</div>
-                </div>
-                <div style={{textAlign:'right'}}>
-                  <div style={{color:'#92400e',fontWeight:700,fontSize:13}}>{daysLeft} jours</div>
-                  <div style={{color:'#aaa',fontSize:11}}>avant le terme</div>
-                  <div style={{color:'#d97706',fontSize:11,marginTop:2}}>{fmtDate(edb!)}</div>
-                </div>
-              </div>
-              {/* Barre progression */}
-              <div style={{height:10,background:'#fef3c7',borderRadius:5,overflow:'hidden',marginBottom:6}}>
-                <div style={{height:'100%',width:`${Math.min((currentWeek/40)*100,100)}%`,background:'linear-gradient(90deg,#d97706,#f59e0b)',borderRadius:5,transition:'width .5s'}}/>
-              </div>
-              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#bbb'}}>
-                {['S1','S13 T2','S27 T3','S40'].map((l,i)=><span key={i}>{l}</span>)}
-              </div>
+        {/* ─── SIGNES DE DANGER ─── */}
+        {tab==='danger' && (
+          <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ background:'#fef2f2', border:'1.5px solid #fecaca', borderRadius:14, padding:'12px 14px' }}>
+              <p style={{ color:'#dc2626', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>🚨 Signes de danger — Ne jamais ignorer</p>
+              <p style={{ color:'#7f1d1d', fontSize:12, margin:0, lineHeight:1.5 }}>En cas de signe d'alerte, <strong>ne pas attendre</strong>. Se rendre immédiatement dans une structure sanitaire ou appeler le <strong>119 (SAMU)</strong>.</p>
             </div>
 
-            {/* Infos bébé selon semaine */}
-            <div style={{background:'linear-gradient(135deg,#fffbeb,#fef3c7)',borderRadius:18,padding:'16px',border:'1px solid #fde68a'}}>
-              <div style={{color:'#92400e',fontWeight:700,fontSize:14,marginBottom:6}}>👶 Bébé cette semaine</div>
-              {currentWeek <= 8 && <p style={{color:'#78350f',fontSize:13,margin:0,lineHeight:1.6}}>Votre bébé est à l'état d'embryon. Ses organes principaux se forment. Taille : {Math.round(currentWeek*0.5)} mm environ.</p>}
-              {currentWeek > 8 && currentWeek <= 12 && <p style={{color:'#78350f',fontSize:13,margin:0,lineHeight:1.6}}>Tous les organes sont formés. Le cœur bat fort. Taille : environ {Math.round(currentWeek*0.6)} cm. C'est un fœtus !</p>}
-              {currentWeek > 12 && currentWeek <= 20 && <p style={{color:'#78350f',fontSize:13,margin:0,lineHeight:1.6}}>Bébé grandit vite ! Il commence à bouger. Taille : {Math.round(10+(currentWeek-12)*1.2)} cm. Vous pourrez bientôt le sentir.</p>}
-              {currentWeek > 20 && currentWeek <= 28 && <p style={{color:'#78350f',fontSize:13,margin:0,lineHeight:1.6}}>Bébé entend votre voix et réagit à la lumière. Taille : {Math.round(24+(currentWeek-20)*1.5)} cm. Poids : {Math.round(300+(currentWeek-20)*80)} g.</p>}
-              {currentWeek > 28 && currentWeek <= 36 && <p style={{color:'#78350f',fontSize:13,margin:0,lineHeight:1.6}}>Bébé prend du poids rapidement. Il se prépare à naître. Taille : {Math.round(37+(currentWeek-28)*0.7)} cm. Poids : {Math.round(1000+(currentWeek-28)*250)} g.</p>}
-              {currentWeek > 36 && <p style={{color:'#78350f',fontSize:13,margin:0,lineHeight:1.6}}>Bébé est prêt ! Il est en position pour naître. Taille : environ 50 cm. Poids : {Math.round(2500+(currentWeek-36)*200)} g en moyenne.</p>}
-            </div>
-
-            {/* Infos grossesse */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-              {[
-                {icon:'🩺',label:'Médecin',value:pregnancy.doctor_name||'Non renseigné',color:'#0d4a3a',bg:'#e8f5ee'},
-                {icon:'🏥',label:'Maternité',value:pregnancy.clinic_name||'Non renseignée',color:'#1d4ed8',bg:'#eff6ff'},
-                {icon:'🩸',label:'Groupe sanguin',value:pregnancy.blood_type||'Non renseigné',color:'#dc2626',bg:'#fef2f2'},
-                {icon:'📅',label:'DDR',value:fmtDate(pregnancy.last_period_date),color:'#d97706',bg:'#fffbeb'},
-              ].map((c,i)=>(
-                <div key={i} style={{background:'white',borderRadius:14,padding:'12px 10px',boxShadow:'0 1px 6px rgba(0,0,0,0.04)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:4}}>
-                    <div style={{width:26,height:26,borderRadius:8,background:c.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>{c.icon}</div>
-                    <span style={{color:'#bbb',fontSize:10}}>{c.label}</span>
+            {SIGNES_DANGER.map((s, i) => (
+              <div key={i} style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)', borderLeft:`4px solid ${s.color}` }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                  <div style={{ width:38, height:38, borderRadius:12, background:s.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{s.icon}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:700, color:s.color, fontSize:13 }}>{s.titre}</div>
+                    {s.urgence && <span style={{ background:s.color, color:'white', borderRadius:6, padding:'1px 8px', fontSize:10, fontWeight:700 }}>URGENCE</span>}
                   </div>
-                  <div style={{color:c.color,fontWeight:700,fontSize:12,lineHeight:1.3}}>{c.value}</div>
+                </div>
+                <p style={{ color:'#444', fontSize:12, margin:'0 0 5px', lineHeight:1.5 }}>{s.desc}</p>
+                <p style={{ color:'#666', fontSize:12, margin:'0 0 5px', lineHeight:1.5, fontStyle:'italic' }}>{s.cat}</p>
+                <p style={{ color:s.color, fontSize:12, margin:0, fontWeight:700 }}>{s.cat2}</p>
+              </div>
+            ))}
+
+            <div style={{ background:'#f0fdf4', borderRadius:14, padding:'12px 14px', border:'1px solid #86efac' }}>
+              <p style={{ color:'#14532d', fontSize:12, margin:0, lineHeight:1.6 }}>
+                ✅ <strong>Rappel :</strong> Aucun signe d'alarme ne doit être banalisé ou traité par automédication. Votre sage-femme ou médecin est votre premier recours. Ces informations sont données à titre éducatif uniquement.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ─── NUTRITION ─── */}
+        {tab==='nutrition' && (
+          <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:12 }}>
+            <div style={{ background:'#f0fdf4', borderRadius:14, padding:'12px 14px', border:'1px solid #86efac' }}>
+              <p style={{ color:'#14532d', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>🥗 Alimentation pendant la grossesse</p>
+              <p style={{ color:'#166534', fontSize:12, margin:0, lineHeight:1.5 }}>Une bonne nutrition couvre les besoins de la mère ET du bébé. Les carences en fer, acide folique et calcium sont les plus fréquentes en Afrique subsaharienne.</p>
+            </div>
+
+            {/* Aliments recommandés */}
+            <p style={{ color:'#15803d', fontWeight:700, fontSize:14, margin:'4px 0 0' }}>✅ Aliments et apports recommandés</p>
+            {ALIMENTS_POUR.map((cat, i) => (
+              <div key={i} style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontWeight:700, color:'#0d4a3a', fontSize:13, marginBottom:8 }}>{cat.cat}</div>
+                {cat.items.map((item, j) => (
+                  <div key={j} style={{ display:'flex', gap:8, marginBottom:5 }}>
+                    <span style={{ color:'#16a34a', flexShrink:0, fontWeight:700 }}>•</span>
+                    <span style={{ color:'#555', fontSize:12, lineHeight:1.5 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {/* Aliments contre-indiqués */}
+            <p style={{ color:'#dc2626', fontWeight:700, fontSize:14, margin:'8px 0 0' }}>❌ Aliments et substances à éviter absolument</p>
+            <div style={{ background:'white', borderRadius:16, overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
+              {ALIMENTS_CONTRE.map((a, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'11px 14px', borderBottom:i<ALIMENTS_CONTRE.length-1?'1px solid #fef2f2':'none' }}>
+                  <span style={{ fontSize:20, flexShrink:0 }}>{a.icon}</span>
+                  <div>
+                    <div style={{ fontWeight:700, color:'#dc2626', fontSize:12 }}>{a.label}</div>
+                    <div style={{ color:'#888', fontSize:11, lineHeight:1.4, marginTop:2 }}>{a.desc}</div>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Prochaine visite */}
-            {pendingVisits.length > 0 && (
-              <div style={{background:'white',borderRadius:18,padding:'14px 16px',boxShadow:'0 2px 10px rgba(0,0,0,0.05)'}}>
-                <p style={{fontWeight:700,color:'#d97706',fontSize:13,margin:'0 0 10px'}}>📅 Prochaines visites recommandées</p>
-                {pendingVisits.slice(0,3).map((v,i)=>{
-                  const tc = TYPE_COLORS[v.type]
-                  const done = doneVisitWeeks.has(v.week)
-                  return (
-                    <div key={i} style={{display:'flex',alignItems:'center',gap:10,marginBottom:i<2?8:0,opacity:done?0.5:1}}>
-                      <div style={{width:34,height:34,borderRadius:10,background:tc.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0,border:`1px solid ${tc.border}`}}>{v.icon}</div>
-                      <div style={{flex:1}}>
-                        <div style={{color:done?'#888':tc.color,fontWeight:600,fontSize:12,textDecoration:done?'line-through':'none'}}>{v.label}</div>
-                        <div style={{color:'#bbb',fontSize:10}}>Semaine {v.week}</div>
-                      </div>
-                      {done && <span style={{color:'#16a34a',fontSize:14}}>✓</span>}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            <div style={{ background:'#eff6ff', borderRadius:14, padding:'12px 14px', border:'1px solid #bfdbfe' }}>
+              <p style={{ color:'#1e40af', fontSize:12, margin:0, lineHeight:1.6 }}>
+                ℹ️ En cas de nausées sévères, de perte de poids ou de difficultés alimentaires, consultez votre médecin. Ces informations sont éducatives — votre professionnel de santé adaptera vos besoins à votre situation.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* ─────── VISITES ─────── */}
-        {tab==='visits' && (
-          <div style={{animation:'fadeUp .3s ease',display:'flex',flexDirection:'column',gap:12}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <h2 style={{color:'#92400e',fontFamily:'Georgia,serif',fontSize:16,margin:0}}>📋 Visites prénatales</h2>
-              <button onClick={()=>setShowAddVisit(!showAddVisit)} style={{background:'linear-gradient(135deg,#d97706,#f59e0b)',color:'white',border:'none',borderRadius:12,padding:'8px 14px',fontWeight:700,fontSize:12,cursor:'pointer'}}>
-                {showAddVisit?'✕ Annuler':'+ Ajouter'}
-              </button>
+        {/* ─── HYGIÈNE & CONSEILS ─── */}
+        {tab==='hygiene' && (
+          <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ background:'#fffbeb', borderRadius:14, padding:'12px 14px', border:'1px solid #fde68a' }}>
+              <p style={{ color:'#92400e', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>💡 Conseils essentiels pour une grossesse saine</p>
+              <p style={{ color:'#78350f', fontSize:12, margin:0, lineHeight:1.5 }}>Ces recommandations contribuent à réduire les complications et à assurer la sécurité de la mère et de l'enfant tout au long de la grossesse.</p>
             </div>
 
-            {/* Formulaire ajout visite */}
-            {showAddVisit && (
-              <div style={{background:'white',borderRadius:18,padding:18,boxShadow:'0 4px 16px rgba(0,0,0,0.08)',border:'1.5px solid #fde68a',animation:'fadeUp .2s ease'}}>
-                <h3 style={{color:'#d97706',fontSize:14,margin:'0 0 12px',fontFamily:'Georgia,serif'}}>Enregistrer une visite</h3>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                  <div><label style={lbl}>Date *</label><input type="date" value={visitDate} max={today} onChange={e=>setVisitDate(e.target.value)} style={inp}/></div>
-                  <div>
-                    <label style={lbl}>Type *</label>
-                    <select value={visitType} onChange={e=>setVisitType(e.target.value)} style={inp}>
-                      <option value="consultation">Consultation</option>
-                      <option value="echo">Échographie</option>
-                      <option value="labo">Laboratoire</option>
-                      <option value="vaccin">Vaccin</option>
-                    </select>
-                  </div>
-                </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                  <div><label style={lbl}>Médecin</label><input style={inp} value={visitDoctor} onChange={e=>setVisitDoctor(e.target.value)} placeholder="Dr. Nom..."/></div>
-                  <div><label style={lbl}>Structure</label><input style={inp} value={visitClinic} onChange={e=>setVisitClinic(e.target.value)} placeholder="Clinique..."/></div>
-                </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-                  <div><label style={lbl}>Poids (kg)</label><input style={inp} type="number" value={visitWeight} onChange={e=>setVisitWeight(e.target.value)} placeholder="65"/></div>
-                  <div><label style={lbl}>Tension</label><input style={inp} value={visitBP} onChange={e=>setVisitBP(e.target.value)} placeholder="120/80"/></div>
-                  <div><label style={lbl}>BPM bébé</label><input style={inp} type="number" value={visitBPM} onChange={e=>setVisitBPM(e.target.value)} placeholder="140"/></div>
-                </div>
-                <label style={lbl}>Prochaine visite prévue</label>
-                <input type="date" value={visitNext} min={today} onChange={e=>setVisitNext(e.target.value)} style={inp}/>
-                <textarea value={visitNotes} onChange={e=>setVisitNotes(e.target.value)} placeholder="Observations du médecin, prescriptions..." rows={2} style={{...inp,resize:'none'}}/>
-                <button onClick={saveVisit} disabled={!visitDate||visitSaving} style={{width:'100%',padding:'12px',borderRadius:50,border:'none',background:visitDate?'linear-gradient(135deg,#d97706,#f59e0b)':'#e5e7eb',color:visitDate?'white':'#aaa',fontWeight:700,cursor:visitDate?'pointer':'not-allowed',fontSize:13}}>
-                  {visitSaving?'⏳ Enregistrement...':'💾 Sauvegarder la visite'}
-                </button>
-              </div>
-            )}
-
-            {/* Calendrier recommandé */}
-            <div style={{background:'white',borderRadius:18,padding:'14px 16px',boxShadow:'0 2px 10px rgba(0,0,0,0.05)'}}>
-              <p style={{fontWeight:700,color:'#92400e',fontSize:13,margin:'0 0 12px'}}>📋 Calendrier prénatal OMS</p>
-              {PRENATAL_SCHEDULE.map((s,i)=>{
-                const done = visits.some(v=>v.visit_type===s.type && Math.abs((v.week_of_pregnancy||0)-s.week)<=2)
-                const tc = TYPE_COLORS[s.type]
-                const isPast = pregnancy && s.week < currentWeek - 1
-                const isCurrent = pregnancy && s.week >= currentWeek - 1 && s.week <= currentWeek + 2
-                return (
-                  <div key={i} style={{display:'flex',gap:10,marginBottom:10,opacity:done?0.55:1}}>
-                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:0}}>
-                      <div style={{width:32,height:32,borderRadius:10,background:done?'#e8f5ee':tc.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,border:`1.5px solid ${done?'#86efac':tc.border}`,flexShrink:0}}>
-                        {done?'✓':s.icon}
-                      </div>
-                      {i<PRENATAL_SCHEDULE.length-1&&<div style={{width:1,height:14,background:'#f0f0f0',marginTop:2}}/>}
-                    </div>
-                    <div style={{flex:1,paddingBottom:4}}>
-                      <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
-                        <span style={{fontWeight:700,color:done?'#888':isCurrent?tc.color:'#333',fontSize:12,textDecoration:done?'line-through':'none'}}>{s.label}</span>
-                        <span style={{background:tc.bg,color:tc.color,borderRadius:6,padding:'1px 7px',fontSize:9,fontWeight:700,border:`1px solid ${tc.border}`}}>S{s.week}</span>
-                        {isCurrent&&!done&&<span style={{background:'#fffbeb',color:'#d97706',borderRadius:6,padding:'1px 7px',fontSize:9,fontWeight:700}}>À FAIRE</span>}
-                        {isPast&&!done&&<span style={{background:'#fef2f2',color:'#dc2626',borderRadius:6,padding:'1px 7px',fontSize:9,fontWeight:700}}>EN RETARD</span>}
-                      </div>
-                      <p style={{color:'#bbb',fontSize:10,margin:'2px 0 0'}}>{s.desc}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Visites effectuées */}
-            {visits.length > 0 && (
-              <div style={{background:'white',borderRadius:18,padding:'14px 16px',boxShadow:'0 2px 10px rgba(0,0,0,0.05)'}}>
-                <p style={{fontWeight:700,color:'#92400e',fontSize:13,margin:'0 0 12px'}}>✅ Visites effectuées ({visits.length})</p>
-                {visits.map((v,i)=>{
-                  const tc = TYPE_COLORS[v.visit_type] || TYPE_COLORS.consultation
-                  return (
-                    <div key={v.id} style={{borderLeft:`3px solid ${tc.border}`,paddingLeft:12,marginBottom:i<visits.length-1?12:0}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                        <div>
-                          <div style={{fontWeight:700,color:tc.color,fontSize:13}}>{v.visit_type==='consultation'?'Consultation':v.visit_type==='echo'?'Échographie':v.visit_type==='labo'?'Laboratoire':'Vaccin'}</div>
-                          <div style={{color:'#aaa',fontSize:11}}>{fmtDate(v.visit_date)}{v.week_of_pregnancy?` · S${v.week_of_pregnancy}`:''}</div>
-                        </div>
-                        <div style={{textAlign:'right',fontSize:11,color:'#888'}}>
-                          {v.weight&&<div>⚖️ {v.weight} kg</div>}
-                          {v.blood_pressure&&<div>💓 {v.blood_pressure}</div>}
-                          {v.baby_heartbeat&&<div>🫀 {v.baby_heartbeat} bpm</div>}
-                        </div>
-                      </div>
-                      {v.doctor_name&&<div style={{color:'#888',fontSize:11,marginTop:3}}>🩺 {v.doctor_name}{v.clinic_name?` · ${v.clinic_name}`:''}</div>}
-                      {v.notes&&<p style={{color:'#555',fontSize:11,margin:'4px 0 0',lineHeight:1.5,fontStyle:'italic'}}>{v.notes}</p>}
-                      {v.next_visit_date&&<div style={{color:'#d97706',fontSize:11,marginTop:4}}>📅 Prochaine visite : {fmtDate(v.next_visit_date)}</div>}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─────── VACCINS ─────── */}
-        {tab==='vaccins' && (
-          <div style={{animation:'fadeUp .3s ease',display:'flex',flexDirection:'column',gap:12}}>
-            <div style={{background:'#eff6ff',borderRadius:14,padding:'10px 14px',border:'1px solid #bfdbfe'}}>
-              <p style={{color:'#1e40af',fontSize:12,margin:0,lineHeight:1.5}}>💉 Ces vaccins sont <strong>recommandés</strong> pendant la grossesse pour protéger la mère et le bébé. Consultez votre médecin.</p>
-            </div>
-            {[
-              { name:'Tétanos (VAT)', when:'S28-S32', done: doneVaccins.some(v=>v.notes?.toLowerCase().includes('tétanos')||v.notes?.toLowerCase().includes('vat')), desc:'Obligatoire. Protège mère et bébé contre le tétanos néonatal.', priority:'high' },
-              { name:'Grippe saisonnière', when:'Tout trimestre', done: doneVaccins.some(v=>v.notes?.toLowerCase().includes('grippe')), desc:'Recommandé. Réduit le risque de complications.', priority:'medium' },
-              { name:'Coqueluche (Tdap)', when:'S27-S36', done: doneVaccins.some(v=>v.notes?.toLowerCase().includes('coqueluche')), desc:'Protège le nouveau-né avant sa propre vaccination.', priority:'medium' },
-              { name:'Hépatite B', when:'Si non immune', done: doneVaccins.some(v=>v.notes?.toLowerCase().includes('hépatite')), desc:'Si non immunisée, peut être fait pendant la grossesse.', priority:'low' },
-            ].map((v,i)=>(
-              <div key={i} style={{background:'white',borderRadius:16,padding:'14px 16px',boxShadow:'0 2px 8px rgba(0,0,0,0.04)',display:'flex',gap:12,opacity:v.done?0.6:1}}>
-                <div style={{width:40,height:40,borderRadius:12,background:v.done?'#e8f5ee':'#f5f3ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,border:`1.5px solid ${v.done?'#86efac':'#ddd6fe'}`}}>
-                  {v.done?'✅':'💉'}
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
-                    <div style={{fontWeight:700,color:v.done?'#888':'#7c3aed',fontSize:13,textDecoration:v.done?'line-through':'none'}}>{v.name}</div>
-                    <span style={{background:'#f5f3ff',color:'#7c3aed',borderRadius:6,padding:'2px 8px',fontSize:10,fontWeight:700}}>{v.when}</span>
-                  </div>
-                  <p style={{color:'#888',fontSize:12,margin:0,lineHeight:1.5}}>{v.desc}</p>
-                  {!v.done && <p style={{color:'#d97706',fontSize:11,margin:'4px 0 0',fontWeight:600}}>→ Parlez-en à votre médecin</p>}
+            {HYGIENE.map((h, i) => (
+              <div key={i} style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 2px 8px rgba(0,0,0,0.04)', display:'flex', gap:12 }}>
+                <div style={{ width:40, height:40, borderRadius:12, background:'#fffbeb', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0, border:'1px solid #fde68a' }}>{h.icon}</div>
+                <div>
+                  <div style={{ fontWeight:700, color:'#92400e', fontSize:13, marginBottom:4 }}>{h.title}</div>
+                  <p style={{ color:'#555', fontSize:12, margin:0, lineHeight:1.6 }}>{h.desc}</p>
                 </div>
               </div>
             ))}
-            <div style={{background:'#fef2f2',borderRadius:14,padding:'10px 14px',border:'1px solid #fecaca'}}>
-              <p style={{color:'#dc2626',fontSize:11,margin:0,lineHeight:1.5}}>⚠️ Vaccins à <strong>éviter</strong> pendant la grossesse : ROR (rougeole), Varicelle, Fièvre jaune (sauf risque élevé). Consultez toujours votre médecin avant tout vaccin.</p>
-            </div>
-          </div>
-        )}
 
-        {/* ─────── CONSEILS ─────── */}
-        {tab==='conseils' && (
-          <div style={{animation:'fadeUp .3s ease',display:'flex',flexDirection:'column',gap:12}}>
-            {pregnancy && tip && (
-              <div style={{background:'linear-gradient(135deg,#fffbeb,#fef3c7)',borderRadius:18,padding:'16px',border:'1.5px solid #fde68a'}}>
-                <p style={{color:'#92400e',fontWeight:700,fontSize:14,margin:'0 0 10px'}}>{tip.title}</p>
-                {tip.tips.map((t,i)=>(
-                  <div key={i} style={{display:'flex',gap:8,marginBottom:7}}>
-                    <span style={{color:'#d97706',flexShrink:0,fontWeight:700}}>•</span>
-                    <span style={{color:'#78350f',fontSize:13,lineHeight:1.5}}>{t}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* Conseils généraux */}
-            {[
-              { icon:'🥗', title:'Alimentation', color:'#059669', bg:'#ecfdf5', tips:['Mangez des protéines à chaque repas : viande, poisson, légumineuses','Consommez des légumes verts riches en acide folique','Évitez les fromages non pasteurisés, la charcuterie crue, les poissons crus','Prenez vos suppléments : acide folique, fer, calcium, vitamine D'] },
-              { icon:'💊', title:'Suppléments essentiels', color:'#7c3aed', bg:'#f5f3ff', tips:['Acide folique : 0,4 mg/jour dès la conception (prévient spina bifida)','Fer : 30 mg/jour pour prévenir l\'anémie','Calcium : 1000 mg/jour pour les os du bébé','Iode : important pour le développement cérébral'] },
-              { icon:'🚶‍♀️', title:'Activité physique', color:'#0d4a3a', bg:'#e8f5ee', tips:['Marche 30 min/jour est excellent','Évitez les sports de contact et les chutes','Natation et yoga prénatal sont idéaux','Arrêtez si douleurs, saignements ou essoufflement'] },
-              { icon:'🚨', title:'Signes d\'alarme — Appelez le 119', color:'#dc2626', bg:'#fef2f2', tips:['Saignements vaginaux à tout moment','Douleurs abdominales intenses','Gonflement brutal du visage ou des mains','Maux de tête violents ou vision trouble','Diminution ou absence des mouvements du bébé','Contractions avant 37 semaines'] },
-            ].map((section,i)=>(
-              <div key={i} style={{background:'white',borderRadius:16,padding:'14px 16px',boxShadow:'0 2px 8px rgba(0,0,0,0.04)'}}>
-                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-                  <div style={{width:36,height:36,borderRadius:12,background:section.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{section.icon}</div>
-                  <span style={{fontWeight:700,color:section.color,fontSize:14}}>{section.title}</span>
+            {/* Valise de maternité */}
+            <div style={{ background:'linear-gradient(135deg,#fffbeb,#fef3c7)', borderRadius:16, padding:'16px', border:'1.5px solid #fde68a' }}>
+              <p style={{ fontWeight:700, color:'#92400e', fontSize:13, margin:'0 0 10px' }}>👜 Préparer la valise de maternité (dès S34)</p>
+              {[
+                '📄 Carnet de santé, carte nationale d\'identité, carnet de mariage',
+                '🩺 Résultats d\'examens, ordonnances, échographies',
+                '👗 Vêtements amples pour la mère (3 tenues)',
+                '🧴 Articles de toilette, serviettes hygiéniques post-partum',
+                '👶 Vêtements nourrisson (3 sets), couverture, couches',
+                '💊 Médicaments prescrits, suppléments',
+                '📱 Téléphone chargé, numéros d\'urgence notés',
+              ].map((item, i) => (
+                <div key={i} style={{ display:'flex', gap:8, marginBottom:6, fontSize:12, color:'#78350f' }}>
+                  <span>{item}</span>
                 </div>
-                {section.tips.map((t,j)=>(
-                  <div key={j} style={{display:'flex',gap:8,marginBottom:j<section.tips.length-1?6:0}}>
-                    <span style={{color:section.color,flexShrink:0,fontSize:12}}>›</span>
-                    <span style={{color:'#555',fontSize:12,lineHeight:1.6}}>{t}</span>
-                  </div>
+              ))}
+            </div>
+
+            {/* Numéros utiles */}
+            <div style={{ background:'linear-gradient(135deg,#7f1d1d,#dc2626)', borderRadius:16, padding:'16px' }}>
+              <p style={{ color:'white', fontWeight:700, fontSize:13, margin:'0 0 10px' }}>🚨 Numéros d'urgence Cameroun</p>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                {[['119','SAMU / Urgences médicales'],['117','Police Secours'],['118','Sapeurs-Pompiers'],['1510','Info Santé MINSANTÉ']].map(([n,l]) => (
+                  <a key={n} href={`tel:${n}`} style={{ background:'rgba(255,255,255,0.15)', borderRadius:10, padding:'10px 12px', textDecoration:'none', textAlign:'center', border:'1px solid rgba(255,255,255,0.2)' }}>
+                    <div style={{ color:'white', fontWeight:800, fontSize:20, fontFamily:'monospace' }}>{n}</div>
+                    <div style={{ color:'rgba(255,255,255,0.75)', fontSize:10, marginTop:2 }}>{l}</div>
+                  </a>
                 ))}
               </div>
-            ))}
+            </div>
+
+            {/* Disclaimer final */}
+            <div style={{ background:'#f8fafc', borderRadius:14, padding:'14px 16px', border:'1px solid #e2e8f0' }}>
+              <p style={{ color:'#475569', fontSize:12, margin:0, lineHeight:1.7, textAlign:'center', fontStyle:'italic' }}>
+                📚 Toutes les informations de cette rubrique sont fournies <strong>à titre éducatif uniquement</strong>. Elles ne remplacent en aucun cas l'avis d'un professionnel de santé qualifié.<br/><br/>
+                Pour un suivi personnalisé et adapté à votre situation, veuillez consulter votre <strong>sage-femme, médecin ou gynécologue-obstétricien</strong>.
+              </p>
+            </div>
           </div>
         )}
       </div>
 
       {/* ── BOTTOM NAV ── */}
-      <div style={{position:'fixed',bottom:0,left:0,right:0,background:'white',borderTop:'1px solid #fde68a',display:'flex',justifyContent:'space-around',padding:'8px 0 10px',boxShadow:'0 -4px 16px rgba(0,0,0,0.06)',zIndex:50}}>
-        {[['home','🏠','Accueil'],['visits','📋','Visites'],['vaccins','💉','Vaccins'],['conseils','💡','Conseils']].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>setTab(id as any)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:1,padding:'3px 16px',border:'none',background:'transparent',cursor:'pointer',color:tab===id?'#d97706':'#bbb',fontWeight:tab===id?700:400}}>
-            <span style={{fontSize:20}}>{icon}</span><span style={{fontSize:9}}>{label}</span>
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #fde68a', display:'flex', justifyContent:'space-around', padding:'8px 0 10px', boxShadow:'0 -4px 16px rgba(0,0,0,0.06)', zIndex:50 }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id as any)} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:1, padding:'3px 12px', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#d97706':'#bbb', fontWeight:tab===t.id?700:400 }}>
+            <span style={{ fontSize:19 }}>{t.icon}</span>
+            <span style={{ fontSize:9, lineHeight:1.2, textAlign:'center' }}>{t.label}</span>
           </button>
         ))}
       </div>
