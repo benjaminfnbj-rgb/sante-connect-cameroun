@@ -146,30 +146,80 @@ export default function InscriptionPage() {
               <button type="button" onClick={() => setStep(1)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#888', fontSize: 12, cursor: 'pointer', fontFamily: 'sans-serif' }}>Changer</button>
             </div>
 
-            {[
-              { label: 'Nom complet *', value: fullName, set: setFullName, type: 'text', placeholder: 'Jean Dupont' },
-              { label: 'Adresse email *', value: email, set: setEmail, type: 'email', placeholder: 'vous@email.com' },
-              { label: 'Mot de passe *', value: password, set: setPassword, type: 'password', placeholder: 'Minimum 8 caractères' },
-              { label: 'Confirmer le mot de passe *', value: confirmPassword, set: setConfirmPassword, type: 'password', placeholder: 'Répétez le mot de passe' },
-              { label: 'Téléphone', value: phone, set: setPhone, type: 'tel', placeholder: '+237 6XX XXX XXX' },
-            ].map(f => (
-              <div key={f.label} style={{ marginBottom: 14 }}>
-                <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>{f.label}</label>
-                <input type={f.type} required={f.label.includes('*')} placeholder={f.placeholder} value={f.value}
-                  onChange={e => f.set(e.target.value)}
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12,
-                    border: f.label.includes('Confirmer') && f.value.length > 0
-                      ? (f.value === password ? '1.5px solid #16a34a' : '1.5px solid #dc2626')
+            {/* Nom complet */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Nom complet *</label>
+              <input type="text" required placeholder="Jean Dupont" value={fullName} onChange={e => setFullName(e.target.value)}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }} />
+            </div>
+
+            {/* Email */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Adresse email *</label>
+              <input type="email" required placeholder="vous@email.com" value={email} onChange={e => setEmail(e.target.value)}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }} />
+            </div>
+
+            {/* Mot de passe avec œil */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Mot de passe *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPwd ? 'text' : 'password'}
+                  required placeholder="Minimum 8 caractères" value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={{ width: '100%', padding: '12px 48px 12px 16px', borderRadius: 12,
+                    border: password.length > 0 ? (password.length >= 8 ? '1.5px solid #16a34a' : '1.5px solid #f59e0b') : '1.5px solid #e5e7eb',
+                    fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }}
+                />
+                <button type="button" onClick={() => setShowPwd(!showPwd)}
+                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#888', padding: 0, lineHeight: 1 }}>
+                  {showPwd ? '🙈' : '👁️'}
+                </button>
+              </div>
+              {password.length > 0 && password.length < 8 && (
+                <p style={{ fontSize: 11, fontFamily: 'sans-serif', margin: '4px 0 0', color: '#f59e0b' }}>⚠️ Minimum 8 caractères ({password.length}/8)</p>
+              )}
+              {password.length >= 8 && (
+                <p style={{ fontSize: 11, fontFamily: 'sans-serif', margin: '4px 0 0', color: '#16a34a' }}>✓ Longueur correcte</p>
+              )}
+            </div>
+
+            {/* Confirmer mot de passe avec œil + validation en temps réel */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Confirmer le mot de passe *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  required placeholder="Répétez le mot de passe" value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  style={{ width: '100%', padding: '12px 48px 12px 16px', borderRadius: 12,
+                    border: confirmPassword.length > 0
+                      ? (confirmPassword === password ? '1.5px solid #16a34a' : '1.5px solid #dc2626')
                       : '1.5px solid #e5e7eb',
                     fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }}
                 />
-                {f.label.includes('Confirmer') && f.value.length > 0 && (
-                  <p style={{ fontSize: 11, fontFamily: 'sans-serif', margin: '4px 0 0', color: f.value === password ? '#16a34a' : '#dc2626' }}>
-                    {f.value === password ? '✓ Les mots de passe correspondent' : '✗ Les mots de passe ne correspondent pas'}
-                  </p>
-                )}
+                <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#888', padding: 0, lineHeight: 1 }}>
+                  {showConfirm ? '🙈' : '👁️'}
+                </button>
               </div>
-            ))}
+              {confirmPassword.length > 0 && (
+                <p style={{ fontSize: 11, fontFamily: 'sans-serif', margin: '4px 0 0',
+                  color: confirmPassword === password ? '#16a34a' : '#dc2626' }}>
+                  {confirmPassword === password
+                    ? '✅ Les mots de passe correspondent'
+                    : '❌ Les mots de passe ne correspondent pas'}
+                </p>
+              )}
+            </div>
+
+            {/* Téléphone */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Téléphone</label>
+              <input type="tel" placeholder="+237 6XX XXX XXX" value={phone} onChange={e => setPhone(e.target.value)}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }} />
+            </div>
 
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Genre</label>
@@ -189,7 +239,14 @@ export default function InscriptionPage() {
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: '13px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: 'white', color: '#666', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'sans-serif' }}>← Retour</button>
-              <button type="submit" disabled={loading} style={{ flex: 2, padding: '13px', borderRadius: 50, border: 'none', background: 'linear-gradient(135deg,#0d4a3a,#2eb87a)', color: 'white', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'sans-serif' }}>
+              <button type="submit"
+                disabled={loading || password !== confirmPassword || password.length < 8}
+                style={{ flex: 2, padding: '13px', borderRadius: 50, border: 'none',
+                  background: (password === confirmPassword && password.length >= 8 && !loading)
+                    ? 'linear-gradient(135deg,#0d4a3a,#2eb87a)' : '#ccc',
+                  color: 'white', fontWeight: 700, fontSize: 14,
+                  cursor: (password === confirmPassword && password.length >= 8) ? 'pointer' : 'not-allowed',
+                  fontFamily: 'sans-serif' }}>
                 {loading ? '⏳ Création...' : '🚀 Créer mon compte'}
               </button>
             </div>
