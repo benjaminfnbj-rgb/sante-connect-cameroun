@@ -338,14 +338,7 @@ export default function SanteFeministePage() {
         </div>
       </div>
 
-      {/* ── TABS ── */}
-      <div style={{background:'white',borderBottom:'1px solid #fce7f3',padding:'0 14px',display:'grid',gridTemplateColumns:'repeat(4,1fr)',position:'sticky',top:0,zIndex:40}}>
-        {[['home','🏠','Accueil'],['log','📝','Journal'],['calendar','📅','Calendrier'],['stats','📊','Stats']].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>setTab(id as any)} style={{padding:'11px 4px',border:'none',background:'transparent',cursor:'pointer',color:tab===id?'#be185d':'#aaa',fontWeight:tab===id?700:400,fontSize:11,borderBottom:tab===id?'2.5px solid #be185d':'2.5px solid transparent',display:'flex',flexDirection:'column',alignItems:'center',gap:1,transition:'all .15s'}}>
-            <span style={{fontSize:18}}>{icon}</span><span>{label}</span>
-          </button>
-        ))}
-      </div>
+
 
       {/* ── MODAL PRÉFÉRENCES KIT ── */}
       {showKitPrefs && (
@@ -409,7 +402,7 @@ export default function SanteFeministePage() {
         </div>
       )}
 
-      <div style={{maxWidth:520,margin:'0 auto',padding:'14px 14px 0'}}>
+      <div style={{maxWidth:520,margin:'0 auto',padding:'28px 14px 0'}}>
 
         {/* ─────── ACCUEIL ─────── */}
         {tab==='home' && (
@@ -470,10 +463,7 @@ export default function SanteFeministePage() {
               </div>
             )}
 
-            {/* Bouton nouveau cycle */}
-            <button onClick={()=>setShowForm(!showForm)} style={{padding:'13px',borderRadius:50,border:'none',cursor:'pointer',background:showForm?'#f0f0f0':'linear-gradient(135deg,#be185d,#db2777)',color:showForm?'#666':'white',fontWeight:700,fontSize:14,boxShadow:showForm?'none':'0 5px 16px rgba(190,24,93,0.28)'}}>
-              {showForm?'✕ Annuler':'+ Nouvelles règles'}
-            </button>
+
 
             {/* Formulaire */}
             {showForm && (
