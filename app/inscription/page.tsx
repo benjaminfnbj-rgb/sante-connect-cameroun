@@ -19,6 +19,9 @@ export default function InscriptionPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [phone, setPhone] = useState('')
   const [gender, setGender] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,6 +32,8 @@ export default function InscriptionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (password !== confirmPassword) { setError('Les mots de passe ne correspondent pas.'); return }
+    if (password.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return }
     setLoading(true)
     setError('')
     const supabase = createClient()
@@ -145,14 +150,24 @@ export default function InscriptionPage() {
               { label: 'Nom complet *', value: fullName, set: setFullName, type: 'text', placeholder: 'Jean Dupont' },
               { label: 'Adresse email *', value: email, set: setEmail, type: 'email', placeholder: 'vous@email.com' },
               { label: 'Mot de passe *', value: password, set: setPassword, type: 'password', placeholder: 'Minimum 8 caractères' },
+              { label: 'Confirmer le mot de passe *', value: confirmPassword, set: setConfirmPassword, type: 'password', placeholder: 'Répétez le mot de passe' },
               { label: 'Téléphone', value: phone, set: setPhone, type: 'tel', placeholder: '+237 6XX XXX XXX' },
             ].map(f => (
               <div key={f.label} style={{ marginBottom: 14 }}>
                 <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>{f.label}</label>
                 <input type={f.type} required={f.label.includes('*')} placeholder={f.placeholder} value={f.value}
                   onChange={e => f.set(e.target.value)}
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }}
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12,
+                    border: f.label.includes('Confirmer') && f.value.length > 0
+                      ? (f.value === password ? '1.5px solid #16a34a' : '1.5px solid #dc2626')
+                      : '1.5px solid #e5e7eb',
+                    fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }}
                 />
+                {f.label.includes('Confirmer') && f.value.length > 0 && (
+                  <p style={{ fontSize: 11, fontFamily: 'sans-serif', margin: '4px 0 0', color: f.value === password ? '#16a34a' : '#dc2626' }}>
+                    {f.value === password ? '✓ Les mots de passe correspondent' : '✗ Les mots de passe ne correspondent pas'}
+                  </p>
+                )}
               </div>
             ))}
 
