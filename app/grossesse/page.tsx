@@ -217,14 +217,15 @@ const HYGIENE = [
 ]
 
 export default function GrossessePage() {
-  const [tab, setTab] = useState<'cpn'|'danger'|'nutrition'|'hygiene'>('cpn')
+  const [tab, setTab] = useState<'cpn'|'danger'|'nutrition'|'allaitement'|'hygiene'>('cpn')
   const [expandedCPN, setExpandedCPN] = useState<number | null>(0)
 
   const TABS = [
-    { id:'cpn',      icon:'📋', label:'Calendrier CPN' },
-    { id:'danger',   icon:'🚨', label:'Signes danger' },
-    { id:'nutrition',icon:'🥗', label:'Nutrition' },
-    { id:'hygiene',  icon:'💡', label:'Conseils' },
+    { id:'cpn',        icon:'📋', label:'Calendrier CPN' },
+    { id:'danger',     icon:'🚨', label:'Signes danger' },
+    { id:'nutrition',  icon:'🥗', label:'Nutrition' },
+    { id:'allaitement',icon:'🤱', label:'Allaitement' },
+    { id:'hygiene',    icon:'💡', label:'Conseils' },
   ]
 
   return (
@@ -254,7 +255,7 @@ export default function GrossessePage() {
       </div>
 
       {/* ── TABS ── */}
-      <div style={{ background:'white', borderBottom:'1px solid #fde68a', display:'grid', gridTemplateColumns:'repeat(4,1fr)', position:'sticky', top:0, zIndex:40 }}>
+      <div style={{ background:'white', borderBottom:'1px solid #fde68a', display:'grid', gridTemplateColumns:'repeat(5,1fr)', position:'sticky', top:0, zIndex:40 }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id as any)} style={{ padding:'10px 4px', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#d97706':'#aaa', fontWeight:tab===t.id?700:400, fontSize:10, borderBottom:tab===t.id?'2.5px solid #d97706':'2.5px solid transparent', display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
             <span style={{ fontSize:16 }}>{t.icon}</span>
@@ -396,12 +397,199 @@ export default function GrossessePage() {
           </div>
         )}
 
+        {/* ─── ALLAITEMENT MATERNEL ─── */}
+        {tab==='allaitement' && (
+          <div style={{animation:'fadeUp .3s ease',display:'flex',flexDirection:'column',gap:12}}>
+
+            {/* Disclaimer */}
+            <div style={{background:'#eff6ff',borderRadius:14,padding:'10px 14px',border:'1px solid #bfdbfe'}}>
+              <p style={{color:'#1e40af',fontSize:12,margin:0,lineHeight:1.5}}>
+                🤱 Ces informations sont <strong>éducatives</strong>. Pour un soutien personnalisé à l\'allaitement, consultez votre sage-femme, un médecin ou un conseiller en lactation certifié.
+              </p>
+            </div>
+
+            {/* Pourquoi allaiter */}
+            <div style={{background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',borderRadius:18,padding:'16px',border:'1.5px solid #6ee7b7'}}>
+              <p style={{fontWeight:700,color:'#065f46',fontSize:14,margin:'0 0 10px'}}>✅ Pourquoi l\'allaitement maternel est recommandé</p>
+              <p style={{color:'#047857',fontSize:12,margin:'0 0 8px',lineHeight:1.6,fontStyle:'italic'}}>L'OMS et le MINSANTÉ Cameroun recommandent l\'allaitement maternel <strong>exclusif pendant les 6 premiers mois</strong>, puis avec alimentation complémentaire jusqu'à 2 ans et au-delà.</p>
+              {[
+                ['Pour le bébé','Anticorps et immunité naturelle contre infections','Réduction risque diarrhée, pneumonies, otites','Développement cérébral optimal (DHA, lactoferrine)','Prévention obésité, diabète, allergies à long terme','Développement affectif et lien mère-enfant','Lait toujours à bonne température, stérile, gratuit'],
+                ['Pour la mère','Retour en forme plus rapide après accouchement','Réduction risque cancer du sein et des ovaires','Contraception naturelle partielle (si allaitement exclusif)','Économie financière importante (lait artificiel coûteux)','Réduction risque dépression post-partum'],
+              ].map((g,i)=>(
+                <div key={i} style={{marginBottom:i===0?10:0}}>
+                  <div style={{fontWeight:700,color:'#065f46',fontSize:12,marginBottom:5}}>{i===0?'👶':'👩'} {g[0]}</div>
+                  {g.slice(1).map((item,j)=>(
+                    <div key={j} style={{display:'flex',gap:8,marginBottom:4}}>
+                      <span style={{color:'#10b981',flexShrink:0}}>•</span>
+                      <span style={{color:'#065f46',fontSize:11,lineHeight:1.5}}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Mise au sein */}
+            <div style={{background:'white',borderRadius:16,padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
+              <p style={{fontWeight:700,color:'#92400e',fontSize:14,margin:'0 0 10px'}}>🤱 Mise au sein — Technique correcte</p>
+              {[
+                {step:'1',title:'Allaiter dans la première heure de vie',desc:'Le contact peau à peau immédiat après naissance stimule la montée laiteuse et renforce l\'immunité du nouveau-né (colostrum)'},
+                {step:'2',title:'Position correcte de la mère',desc:'Assise confortablement ou allongée. Tenir bébé ventre contre ventre. Sa tête, son cou et son dos alignés en ligne droite'},
+                {step:'3',title:'Prise correcte du sein (bonne succion)',desc:'Bouche grande ouverte, lèvres éversées vers l\'extérieur, menton touchant le sein, aréole bien en bouche. Pas seulement le mamelon !'},
+                {step:'4',title:'Signes d\'une bonne tétée',desc:'Mouvements de succion profonds et lents, déglutition audible, bébé se détache spontanément, sein ramolli après la tétée'},
+                {step:'5',title:'Fréquence et durée',desc:'À la demande, 8 à 12 fois par 24h en période néonatale. Durée variable (10 à 30 min). Vider complètement un sein avant de passer à l\'autre'},
+                {step:'6',title:'Soin des mamelons',desc:'Laisser sécher à l\'air après la tétée. Une goutte de lait maternel appliquée sur le mamelon favorise la cicatrisation. Éviter savon ou alcool'},
+              ].map((s,i)=>(
+                <div key={i} style={{display:'flex',gap:10,marginBottom:i<5?10:0}}>
+                  <div style={{width:28,height:28,borderRadius:'50%',background:'#d97706',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>{s.step}</div>
+                  <div>
+                    <div style={{fontWeight:700,color:'#92400e',fontSize:12,marginBottom:2}}>{s.title}</div>
+                    <p style={{color:'#555',fontSize:11,margin:0,lineHeight:1.5}}>{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Signes bébé bien nourri */}
+            <div style={{background:'white',borderRadius:16,padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
+              <p style={{fontWeight:700,color:'#0d4a3a',fontSize:14,margin:'0 0 10px'}}>📊 Comment savoir si bébé est bien nourri ?</p>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                {[
+                  {icon:'⚖️',label:'Poids',ok:'Retrouve son poids de naissance à J10–J14',nok:'Perte > 10% du poids = consulter'},
+                  {icon:'💧',label:'Couches',ok:'6 à 8 couches mouillées/jour après J4',nok:'Moins de 6 couches = allaitement insuffisant'},
+                  {icon:'💩',label:'Selles',ok:'3 à 4 selles jaune d\'or par jour (J4+)',nok:'Selles vertes persistantes = vérifier position'},
+                  {icon:'😴',label:'Comportement',ok:'Bébé calme, satisfait après la tétée',nok:'Pleurs incessants après tétée = consulter'},
+                ].map((c,i)=>(
+                  <div key={i} style={{background:'#f0fdf4',borderRadius:12,padding:'10px'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                      <span style={{fontSize:16}}>{c.icon}</span>
+                      <span style={{fontWeight:700,color:'#0d4a3a',fontSize:12}}>{c.label}</span>
+                    </div>
+                    <div style={{color:'#16a34a',fontSize:10,lineHeight:1.4,marginBottom:4}}>✓ {c.ok}</div>
+                    <div style={{color:'#dc2626',fontSize:10,lineHeight:1.4}}>⚠ {c.nok}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Problèmes fréquents */}
+            <div style={{background:'white',borderRadius:16,padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
+              <p style={{fontWeight:700,color:'#7c3aed',fontSize:14,margin:'0 0 10px'}}>🛠️ Problèmes fréquents et solutions</p>
+              {[
+                {pb:'Mamelons douloureux / crevasses',sol:'Corriger la position de succion. Appliquer lait maternel après tétée. Si douleur persiste → consulter sage-femme',urgence:false},
+                {pb:'Engorgement mammaire (seins tendus, durs)',sol:'Tétées fréquentes et efficaces. Massage doux avant tétée. Compresse tiède avant, froide après. Ne pas arrêter l\'allaitement',urgence:false},
+                {pb:'Mastite (sein rouge, chaud, douloureux + fièvre)',sol:'Continuer à allaiter du côté atteint (sécuritaire pour bébé). Consulter médecin rapidement → antibiotiques nécessaires si infection',urgence:true},
+                {pb:'Abcès du sein (boule douloureuse fluctuante)',sol:'URGENCE MÉDICALE — ne pas drainer soi-même. Consulter chirurgien en urgence. Peut nécessiter drainage chirurgical',urgence:true},
+                {pb:'Montée laiteuse tardive (> J5)',sol:'Tétées très fréquentes, contact peau à peau prolongé, boire suffisamment. Si bébé perd trop de poids → compléments ponctuels + soutien professionnel',urgence:false},
+                {pb:'Bébé refuse le sein',sol:'Vérifier position, essayer différentes positions. Allaiter dans un endroit calme. Faire du peau à peau. Écarter refus lié à une douleur (muguet, fein court)',urgence:false},
+              ].map((p,i)=>(
+                <div key={i} style={{borderLeft:`3px solid ${p.urgence?'#dc2626':'#7c3aed'}`,paddingLeft:12,marginBottom:i<5?10:0}}>
+                  <div style={{fontWeight:700,color:p.urgence?'#dc2626':'#7c3aed',fontSize:12,marginBottom:3}}>
+                    {p.urgence&&'🚨 '}{p.pb}
+                  </div>
+                  <p style={{color:'#555',fontSize:11,margin:0,lineHeight:1.5}}>{p.sol}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Contre-indications */}
+            <div style={{background:'#fef2f2',borderRadius:16,padding:'16px',border:'1.5px solid #fecaca'}}>
+              <p style={{fontWeight:700,color:'#dc2626',fontSize:14,margin:'0 0 10px'}}>❌ Contre-indications à l\'allaitement maternel</p>
+              <p style={{color:'#7f1d1d',fontSize:11,margin:'0 0 10px',lineHeight:1.5,fontStyle:'italic'}}>Ces situations sont rares. Dans le doute, toujours consulter avant d'arrêter l\'allaitement.</p>
+
+              <div style={{marginBottom:12}}>
+                <p style={{fontWeight:700,color:'#dc2626',fontSize:12,margin:'0 0 8px'}}>Contre-indications absolues (allaitement INTERDIT) :</p>
+                {[
+                  'Mère VIH positive au Cameroun (PTME) — sauf si accès garanti aux ARV + eau potable (décision médicale)',
+                  'Mère sous chimiothérapie anticancéreuse active',
+                  'Mère sous traitement radioactif (iode radioactif)',
+                  'Galactosémie classique chez le nouveau-né (maladie génétique rare — tests néonataux)',
+                  'Mère toxicomane (héroïne, cocaïne, méthamphétamine non substituée)',
+                ].map((item,i)=>(
+                  <div key={i} style={{display:'flex',gap:8,marginBottom:5}}>
+                    <span style={{color:'#dc2626',flexShrink:0,fontWeight:700}}>✗</span>
+                    <span style={{color:'#7f1d1d',fontSize:11,lineHeight:1.5}}>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{marginBottom:12}}>
+                <p style={{fontWeight:700,color:'#d97706',fontSize:12,margin:'0 0 8px'}}>Contre-indications relatives (décision médicale au cas par cas) :</p>
+                {[
+                  'Mère sous certains médicaments : anticoagulants, certains antibiotiques, antiépileptiques → demander avis médical',
+                  'Tuberculose maternelle active non traitée (reprendre après 2 semaines de traitement)',
+                  'Herpès actif sur le sein (pas dans d\'autres localisations)',
+                  'Alcoolisme sévère (consommation modérée et ponctuelle : attendre 2h après la consommation)',
+                  'Nouveau-né prématuré ou très petit poids : allaitement possible mais sous surveillance néonatale',
+                ].map((item,i)=>(
+                  <div key={i} style={{display:'flex',gap:8,marginBottom:5}}>
+                    <span style={{color:'#d97706',flexShrink:0,fontWeight:700}}>⚠</span>
+                    <span style={{color:'#78350f',fontSize:11,lineHeight:1.5}}>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{background:'white',borderRadius:10,padding:'10px'}}>
+                <p style={{fontWeight:700,color:'#0d4a3a',fontSize:12,margin:'0 0 6px'}}>✅ L'allaitement N'est PAS contre-indiqué en cas de :</p>
+                {[
+                  'Hépatite B (vacciner le nouveau-né à la naissance)',
+                  'Mastite (infection du sein) — continuer à allaiter',
+                  'Prise d\'antibiotiques habituels, paracétamol, ibuprofène',
+                  'Covid-19 (le lait maternel contient des anticorps protecteurs)',
+                  'Chirurgie mammaire antérieure (sauf ablation des canaux galactophores)',
+                ].map((item,i)=>(
+                  <div key={i} style={{display:'flex',gap:8,marginBottom:4}}>
+                    <span style={{color:'#16a34a',flexShrink:0}}>✓</span>
+                    <span style={{color:'#555',fontSize:11,lineHeight:1.5}}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sevrage */}
+            <div style={{background:'white',borderRadius:16,padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
+              <p style={{fontWeight:700,color:'#0d4a3a',fontSize:14,margin:'0 0 10px'}}>🌱 Sevrage et alimentation complémentaire</p>
+              {[
+                {age:'0 à 6 mois',desc:'Allaitement maternel EXCLUSIF — ni eau, ni jus, ni bouillies. Le lait maternel suffit à tous les besoins',color:'#16a34a'},
+                {age:'6 mois',desc:'Introduction alimentation complémentaire : bouillies enrichies, purées légumes, viandes mixées — TOUT EN CONTINUANT l\'allaitement',color:'#d97706'},
+                {age:'6 à 12 mois',desc:'Allaitement + alimentation diversifiée 2 à 3 repas/jour. Éviter sel, sucre, miel (< 1 an)',color:'#0891b2'},
+                {age:'12 mois à 2 ans+',desc:'Allaitement toujours bénéfique en complément de l\'alimentation familiale. L\'OMS recommande de continuer jusqu\'à 2 ans minimum',color:'#7c3aed'},
+              ].map((s,i)=>(
+                <div key={i} style={{display:'flex',gap:10,marginBottom:i<3?10:0,padding:'10px 12px',background:'#f9fafb',borderRadius:10,borderLeft:`3px solid ${s.color}`}}>
+                  <div style={{flexShrink:0,background:s.color,color:'white',borderRadius:8,padding:'3px 8px',fontSize:10,fontWeight:700,alignSelf:'flex-start',whiteSpace:'nowrap'}}>{s.age}</div>
+                  <p style={{color:'#444',fontSize:12,margin:0,lineHeight:1.5}}>{s.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Allaitement et planification familiale */}
+            <div style={{background:'#fffbeb',borderRadius:14,padding:'14px 16px',border:'1px solid #fde68a'}}>
+              <p style={{fontWeight:700,color:'#92400e',fontSize:13,margin:'0 0 8px'}}>💊 Allaitement et contraception</p>
+              <p style={{color:'#78350f',fontSize:12,margin:'0 0 8px',lineHeight:1.5}}>L'allaitement exclusif protège partiellement contre une nouvelle grossesse (Méthode MAMA) sous conditions strictes :</p>
+              {['Allaitement exclusif au sein (pas de biberon, pas de tétine)','Bébé de moins de 6 mois','Absence de retour de couches (règles)'].map((c,i)=>(
+                <div key={i} style={{display:'flex',gap:8,marginBottom:4}}>
+                  <span style={{color:'#d97706',flexShrink:0}}>→</span>
+                  <span style={{color:'#78350f',fontSize:11,lineHeight:1.5}}>{c}</span>
+                </div>
+              ))}
+              <p style={{color:'#92400e',fontSize:11,margin:'8px 0 0',fontWeight:700}}>⚠️ Si une seule condition n\'est pas remplie → utiliser une contraception. Consulter votre sage-femme.</p>
+            </div>
+
+            {/* Disclaimer final */}
+            <div style={{background:'#f8fafc',borderRadius:14,padding:'14px 16px',border:'1px solid #e2e8f0'}}>
+              <p style={{color:'#475569',fontSize:11,margin:0,lineHeight:1.7,textAlign:'center',fontStyle:'italic'}}>
+                📚 Informations <strong>à titre éducatif uniquement</strong>.<br/>
+                Pour un accompagnement personnalisé à l\'allaitement, consultez votre <strong>sage-femme, médecin ou un conseiller en lactation certifié IBCLC</strong>.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ─── HYGIÈNE & CONSEILS ─── */}
         {tab==='hygiene' && (
           <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:10 }}>
             <div style={{ background:'#fffbeb', borderRadius:14, padding:'12px 14px', border:'1px solid #fde68a' }}>
               <p style={{ color:'#92400e', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>💡 Conseils essentiels pour une grossesse saine</p>
-              <p style={{ color:'#78350f', fontSize:12, margin:0, lineHeight:1.5 }}>Ces recommandations contribuent à réduire les complications et à assurer la sécurité de la mère et de l'enfant tout au long de la grossesse.</p>
+              <p style={{ color:'#78350f', fontSize:12, margin:0, lineHeight:1.5 }}>Ces recommandations contribuent à réduire les complications et à assurer la sécurité de la mère et de l\'enfant tout au long de la grossesse.</p>
             </div>
 
             {HYGIENE.map((h, i) => (
