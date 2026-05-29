@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, email, fullName, userType, phone, gender, city, accessToken } = await req.json()
+    const { userId, email, fullName, userType, phone, gender, city, region, accessToken } = await req.json()
     if (!userId || !email) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
     // Use the user's own access token to authenticate - this respects RLS
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
       phone: phone || null,
       gender: gender || null,
       city: city || null,
+      region: region || null,
     })
 
     if (profileError) {

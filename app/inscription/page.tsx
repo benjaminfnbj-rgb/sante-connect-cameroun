@@ -23,6 +23,8 @@ export default function InscriptionPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [phone, setPhone] = useState('')
+  const [region, setRegion] = useState('')
+  const [city, setCity] = useState('')
   const [gender, setGender] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -39,7 +41,7 @@ export default function InscriptionPage() {
     const supabase = createClient()
     const { data: signUpData, error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { full_name: fullName, user_type: role, phone, gender } }
+      options: { data: { full_name: fullName, user_type: role, phone, gender, region, city } }
     })
     if (error) { setError(error.message); setLoading(false) }
     else {
@@ -51,7 +53,7 @@ export default function InscriptionPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId: signUpData.user.id,
-              email, fullName, userType: role, phone, gender, city: '',
+              email, fullName, userType: role, phone, gender, city, region,
               accessToken: signUpData.session?.access_token || ''
             })
           })
@@ -233,6 +235,23 @@ export default function InscriptionPage() {
               <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Téléphone</label>
               <input type="tel" placeholder="+237 6XX XXX XXX" value={phone} onChange={e => setPhone(e.target.value)}
                 style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'sans-serif' }} />
+            </div>
+
+            {/* Localisation */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:14 }}>
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Région</label>
+                <select value={region} onChange={e => { setRegion(e.target.value); setCity('') }}
+                  style={{ width:'100%', padding:'12px 14px', borderRadius:12, border:'1.5px solid #e5e7eb', fontSize:13, outline:'none', boxSizing:'border-box', fontFamily:'sans-serif', background:'white' }}>
+                  <option value="">Sélectionner</option>
+                  {['Adamaoua','Centre','Est','Extrême-Nord','Littoral','Nord','Nord-Ouest','Ouest','Sud','Sud-Ouest'].map(r=><option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, color: '#0d4a3a', marginBottom: 6, fontSize: 13, fontFamily: 'sans-serif' }}>Ville</label>
+                <input placeholder="Votre ville" value={city} onChange={e => setCity(e.target.value)}
+                  style={{ width:'100%', padding:'12px 14px', borderRadius:12, border:'1.5px solid #e5e7eb', fontSize:13, outline:'none', boxSizing:'border-box', fontFamily:'sans-serif' }} />
+              </div>
             </div>
 
             <div style={{ marginBottom: 20 }}>
