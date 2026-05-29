@@ -52,6 +52,20 @@ export const PLAN_FEATURES = {
     canAccessInsurance: true,       // ✅ Espace Assurances
     canAccessVaccineCalendar: false,
   },
+  pregnancy: {
+    price: 3000,
+    label: 'Suivi de Grossesse',
+    canAccessDirectory: true,
+    canAccessPharmacy: true,
+    canAccessHospitals: true,
+    canAccessAI: true,
+    canAccessAppointments: true,
+    canAccessCondomsKit: false,
+    canAccessPadsKit: true,
+    canAccessInsurance: false,
+    canAccessVaccineCalendar: false,
+    canAccessPregnancy: true,
+  },
   family: {
     price: 2500,
     label: 'Forfait Famille / Maternité',

@@ -41,7 +41,8 @@ export default function DashboardPage() {
     { icon:'🛡️', label:'Assurances', href:'/assurances', color:'#7c3aed', bg:'#f5f3ff', desc:'Couverture santé' },
     { icon:'🏥', label:'Structures', href:'/structures', color:'#0891b2', bg:'#ecfeff', desc:'Pyramide sanitaire' },
     { icon:'🎁', label:'Kit Santé', href:'/kit-sante', color:'#059669', bg:'#ecfdf5', desc:'Retraits mensuels' },
-    { icon:'👤', label:'Mon Profil', href:'/profil', color:'#6b7280', bg:'#f9fafb', desc:'Mes informations' },
+    { icon:'🤰', label:'Grossesse', href:'/grossesse', color:'#d97706', bg:'#fffbeb', desc:'Suivi prénatal' },
+  { icon:'👤', label:'Mon Profil', href:'/profil', color:'#6b7280', bg:'#f9fafb', desc:'Mes informations' },
   ]
 
   const urgences = [
