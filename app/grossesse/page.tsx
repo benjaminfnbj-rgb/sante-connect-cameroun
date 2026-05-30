@@ -200,17 +200,25 @@ export default function GrossessePage() {
       `}</style>
 
       {/* HEADER */}
-      <div style={{ background:'linear-gradient(160deg,#7c3003,#c2690a,#d97706)', padding:'18px 16px 22px', position:'relative', overflow:'hidden' }}>
-        <div style={{ position:'absolute', top:-30, right:-30, width:140, height:140, borderRadius:'50%', background:'rgba(255,255,255,0.05)' }}/>
-        <div style={{ position:'absolute', bottom:-20, left:-20, width:100, height:100, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }}/>
-        <div style={{ display:'flex', alignItems:'center', gap:12, maxWidth:560, margin:'0 auto', position:'relative', zIndex:1 }}>
-          <Link href="/dashboard" style={{ background:'rgba(255,255,255,0.15)', borderRadius:10, padding:'7px 10px', color:'white', textDecoration:'none', fontSize:12, fontWeight:600, flexShrink:0 }}>← Retour</Link>
-          <div style={{ flex:1, textAlign:'center' }}>
-            <div style={{ color:'white', fontSize:17, fontWeight:800 }}>🤰 Suivi de Grossesse</div>
+      <div style={{ background:'linear-gradient(160deg,#7c3003,#c2690a,#d97706)', padding:'14px 16px 18px', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:-30, right:-30, width:130, height:130, borderRadius:'50%', background:'rgba(255,255,255,0.05)' }}/>
+        <div style={{ position:'absolute', bottom:-20, left:-20, width:90, height:90, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }}/>
+        <div style={{ maxWidth:560, margin:'0 auto', position:'relative', zIndex:1 }}>
+          {/* Ligne haut : retour seul à gauche */}
+          <Link href="/dashboard" style={{ color:'rgba(255,255,255,0.7)', textDecoration:'none', fontSize:12, display:'inline-flex', alignItems:'center', gap:4, marginBottom:10 }}>
+            ← Retour
+          </Link>
+          {/* Titre centré */}
+          <div style={{ textAlign:'center', marginBottom:12 }}>
+            <div style={{ fontSize:28, marginBottom:4 }}>🤰</div>
+            <div style={{ color:'white', fontSize:18, fontWeight:800, letterSpacing:-.3 }}>Suivi de Grossesse</div>
             <div style={{ color:'rgba(255,255,255,0.6)', fontSize:11, marginTop:2 }}>Guide éducatif · Santé maternelle & fœtale</div>
           </div>
-          <div style={{ background:'rgba(255,255,255,0.15)', borderRadius:10, padding:'5px 8px', textAlign:'center' }}>
-            <div style={{ color:'white', fontSize:9, fontWeight:700 }}>⚕️ Éducatif</div>
+          {/* Bandeau disclaimer intégré dans le header */}
+          <div style={{ background:'rgba(255,255,255,0.12)', backdropFilter:'blur(8px)', borderRadius:12, padding:'10px 14px', border:'1px solid rgba(255,255,255,0.2)', textAlign:'center' }}>
+            <p style={{ color:'rgba(255,255,255,0.95)', fontSize:11, margin:0, lineHeight:1.6 }}>
+              ⚕️ <strong>Informations éducatives uniquement.</strong> Pour tout suivi médical, consultez un(e) <strong>médecin, sage-femme ou gynécologue</strong>.
+            </p>
           </div>
         </div>
       </div>
