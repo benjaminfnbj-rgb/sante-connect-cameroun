@@ -3,653 +3,556 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-// ─── Calendrier CPN officiel Cameroun (MINSANTÉ / DSF) ─────────────────────
-// Source : Direction de la Santé Familiale, Ministère de la Santé Publique du Cameroun
-// CPN1 = jusqu'à 14e SA | CPN2 = 2e trimestre | CPN3 = 3e trimestre avant 9e mois | CPN4 = 9e mois obligatoire
+// ─── 7 CPN + 1 CPON — Protocole Cameroun ────────────────────────────────────
 const CPN_DATA = [
   {
-    numero: 'CPN 1',
-    semaines: 'Jusqu\'à la 14e SA incluse — 1er trimestre',
-    trimestre: 1,
+    id: 'CPN 1', mois: 'Avant 12 SA — 1er trimestre', trim: 1,
+    color: '#0d4a3a', bg: '#e8f5ee', border: '#86efac',
     examens: [
-      { nom: 'Ouverture du dossier obstétrical', objectif: 'Enregistrer les antécédents médicaux, obstétricaux, familiaux et mode de vie' },
-      { nom: 'Calcul DDR et terme prévu d\'accouchement', objectif: 'Dater la grossesse (DDR + 9 mois + 7 jours) et fixer le terme prévu' },
-      { nom: 'Prise du poids et de la taille', objectif: 'Établir l\'IMC de référence, dépister obésité ou maigreur excessive' },
-      { nom: 'Prise de la Tension Artérielle (TA)', objectif: 'Référence de base — TA normale < 140/90 mmHg' },
-      { nom: 'Examen général : muqueuses, œdèmes, seins', objectif: 'Dépister anémie clinique, œdèmes précoces, préparer l\'allaitement' },
-      { nom: 'Examen obstétrical : hauteur utérine + BCF si audibles', objectif: 'Confirmer grossesse intra-utérine, vitalité fœtale' },
-      { nom: 'Groupage sanguin ABO + Rhésus', objectif: 'Dépister incompatibilité fœto-maternelle Rhésus — clé pour PTME et transfusion' },
-      { nom: 'Numération Formule Sanguine (NFS)', objectif: 'Dépister anémie (Hb < 11 g/dL), drépanocytose, thrombopénie' },
-      { nom: 'Test de dépistage VIH (PTME)', objectif: 'Prévenir Transmission Mère-Enfant du VIH — obligatoire et confidentiel au Cameroun' },
-      { nom: 'Sérologie Syphilis (TPHA / RPR)', objectif: 'La syphilis non traitée cause mort fœtale ou malformations graves' },
-      { nom: 'Sérologie Hépatite B (AgHBs)', objectif: 'Si positive : vaccination du nouveau-né à la naissance (dans les 12h)' },
-      { nom: 'Glycémie à jeun', objectif: 'Dépistage précoce diabète préexistant ou gestationnel' },
-      { nom: 'ECBU + bandelette urinaire', objectif: 'Infection urinaire silencieuse → risque accouchement prématuré. Protéinurie = alerte HTA' },
-      { nom: 'Goutte épaisse / TDR paludisme', objectif: 'Paludisme endémique au Cameroun — source majeure d\'anémie et de prématurité' },
-      { nom: 'TPI 1 — Sulfadoxine-Pyriméthamine (SP)', objectif: 'Traitement Préventif Intermittent du paludisme — 1ère dose dès CPN1 (protocole MINSANTÉ)' },
-      { nom: 'Supplémentation Acide Folique 5 mg/j + Fer', objectif: 'Acide folique : prévenir anomalies du tube neural (spina bifida). Fer : prévenir anémie' },
-      { nom: 'Remise de la moustiquaire imprégnée (MII)', objectif: 'Protection paludisme toutes les nuits — recommandée tout au long de la grossesse' },
-      { nom: 'Éducation pour la Santé (EPS)', objectif: 'Hygiène, alimentation, signes de danger, préparation à l\'accouchement, planification familiale' },
+      { nom: 'Ouverture du dossier obstétrical', obj: 'Antécédents médicaux, obstétricaux, familiaux et mode de vie' },
+      { nom: 'Calcul DDR + terme prévu', obj: 'DDR + 9 mois + 7 jours = date prévue accouchement' },
+      { nom: 'Poids + taille + IMC', obj: 'Référence de base, dépister obésité ou maigreur' },
+      { nom: 'Tension artérielle (TA)', obj: 'TA de référence — normale < 140/90 mmHg' },
+      { nom: 'Groupage ABO + Rhésus', obj: 'Incompatibilité rhésus, préparation transfusion' },
+      { nom: 'NFS (numération formule sanguine)', obj: 'Dépister anémie, drépanocytose, thrombopénie' },
+      { nom: 'Test VIH (PTME)', obj: 'Prévenir transmission mère-enfant — obligatoire au Cameroun' },
+      { nom: 'Sérologie syphilis (TPHA/RPR)', obj: 'Syphilis non traitée → mort fœtale ou malformations' },
+      { nom: 'Sérologie hépatite B (AgHBs)', obj: 'Vaccination du nouveau-né à la naissance si positive' },
+      { nom: 'Glycémie à jeun', obj: 'Dépistage précoce diabète préexistant ou gestationnel' },
+      { nom: 'ECBU + bandelette urinaire', obj: 'Infection urinaire silencieuse → risque prématurité' },
+      { nom: 'TDR paludisme / goutte épaisse', obj: 'Paludisme endémique = source majeure anémie et prématurité' },
+      { nom: 'TPI 1 — Sulfadoxine-Pyriméthamine', obj: 'Traitement Préventif Intermittent antipaludéen — 1ère dose' },
+      { nom: 'Acide folique 5 mg/j + Fer', obj: 'Prévenir spina bifida (acide folique) et anémie (fer)' },
+      { nom: 'Moustiquaire imprégnée (MII)', obj: 'Protection paludisme toutes les nuits' },
+      { nom: '🔬 Échographie 1 — S11 à S14', obj: 'Datation précise, clarté nucale, vitalité fœtale, nb de fœtus' },
     ],
-    conseils: 'Venir dès suspicion de grossesse, idéalement avant 8 SA et au plus tard avant 14 SA. Apporter le carnet de santé maternelle. Arrêter alcool, tabac, automédication. Prendre acide folique dès la conception.',
+    conseil: 'Venir dès la suspicion de grossesse, AVANT 12 SA. Apporter le carnet de santé. Arrêter alcool, tabac, automédication.',
   },
   {
-    numero: 'CPN 2',
-    semaines: '2e trimestre — entre 15 SA et 27 SA',
-    trimestre: 2,
+    id: 'CPN 2', mois: '4e mois (S15–S18)', trim: 2,
+    color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe',
     examens: [
-      { nom: 'Prise du poids et de la TA', objectif: 'Gain pondéral normal : 0,5 à 1 kg/semaine. TA ≥ 140/90 = alerte HTA' },
-      { nom: 'Mesure de la Hauteur Utérine (HU)', objectif: 'HU (cm) doit ≈ nombre de SA (ex : 24 cm à 24 SA ± 2 cm). HU < SA - 4 = retard de croissance' },
-      { nom: 'Auscultation des Bruits du Cœur Fœtal (BCF)', objectif: 'Normal : 120 à 160 batt/min. Confirme vitalité fœtale' },
-      { nom: 'Examen des membres : œdèmes, varices', objectif: 'Œdèmes des membres inférieurs = surveiller. Œdèmes du visage = alarme pré-éclampsie' },
-      { nom: 'Bandelette urinaire (protéinurie + glucosurie)', objectif: 'Protéinurie = signe pré-éclampsie. Glucosurie = signe diabète gestationnel' },
-      { nom: 'NFS de contrôle', objectif: 'Évaluer efficacité supplémentation en fer. Dépister anémie aggravée ou persistante' },
-      { nom: 'Sérologie VIH de contrôle (si CPN1 négative)', objectif: 'Fenêtre sérologique : un 2e test est recommandé pour sécuriser le programme PTME' },
-      { nom: 'Goutte épaisse / TDR paludisme (si fièvre ou anémie)', objectif: 'Paludisme au 2e trimestre : risque fausse couche tardive, retard de croissance' },
-      { nom: 'TPI 2 — Sulfadoxine-Pyriméthamine (SP)', objectif: '2e dose TPI antipaludéen — intervalle ≥ 4 semaines après TPI 1' },
-      { nom: 'VAT 1 — Vaccin Antitétanique', objectif: '1ère dose de vaccin antitétanique — protège mère ET nouveau-né contre tétanos néonatal' },
-      { nom: 'Déparasitage — Mébendazole 500 mg (dose unique)', objectif: 'Élimine ankylostomes et vers intestinaux aggravant l\'anémie — prescrit à partir du 2e trimestre uniquement' },
-      { nom: 'Supplémentation fer + acide folique (suite)', objectif: 'Continuer jusqu\'au post-partum — besoins augmentent avec le volume sanguin maternel' },
-      { nom: 'Échographie morphologique (idéalement S20–S22)', objectif: 'Bilan morphologique fœtal complet, dépistage malformations, localisation placenta, liquide amniotique' },
-      { nom: 'Éducation pour la Santé (EPS)', objectif: 'Signes de danger 2e trimestre, mouvements fœtaux, allaitement, planification familiale post-partum' },
+      { nom: 'Poids + TA + examen général', obj: 'Surveillance tension et prise de poids (+ 0,5 kg/sem)' },
+      { nom: 'Hauteur utérine (HU) + BCF', obj: 'HU ≈ nombre SA en cm. BCF normal : 120–160 batt/min' },
+      { nom: 'Bandelette urinaire (protéinurie)', obj: 'Signe précoce pré-éclampsie' },
+      { nom: 'NFS de contrôle', obj: 'Efficacité supplémentation en fer, anémie persistante ?' },
+      { nom: 'TPI 2 — Sulfadoxine-Pyriméthamine', obj: '2e dose TPI (≥ 4 semaines après TPI 1)' },
+      { nom: 'VAT 1 — Vaccin Antitétanique', obj: '1ère dose VAT — protège mère ET nouveau-né contre tétanos' },
+      { nom: 'Mébendazole 500 mg (dose unique)', obj: 'Déparasitage — à partir du 2e trimestre uniquement' },
+      { nom: 'Supplémentation fer + acide folique', obj: 'Continuer jusqu\'au post-partum' },
     ],
-    conseils: 'Revenir au 5e ou 6e mois de grossesse. Dormir chaque nuit sous moustiquaire. Signaler immédiatement tout saignement, douleur abdominale, fièvre ou absence de mouvements fœtaux.',
+    conseil: 'Continuer à dormir sous moustiquaire chaque nuit. Signaler tout saignement ou douleur abdominale.',
   },
   {
-    numero: 'CPN 3',
-    semaines: '3e trimestre — entre 28 SA et avant le 9e mois (avant 36 SA)',
-    trimestre: 3,
+    id: 'CPN 3', mois: '5e mois (S19–S22)', trim: 2,
+    color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe',
     examens: [
-      { nom: 'Prise du poids et de la TA (systématique)', objectif: 'Prise de poids > 1 kg/semaine + TA ≥ 140/90 = suspicion pré-éclampsie — surveiller en urgence' },
-      { nom: 'Mesure de la Hauteur Utérine (HU)', objectif: 'Dépister retard de croissance (HU < SA - 4 cm) ou macrosomie fœtale' },
-      { nom: 'Auscultation BCF + évaluation mouvements actifs fœtaux', objectif: 'Bébé doit bouger ≥ 10 fois par jour après 28 SA. Absence = urgence obstétricale' },
-      { nom: 'Palper abdominal : présentation fœtale (4 manœuvres de Léopold)', objectif: 'Vérifier présentation céphalique (tête en bas). Si siège ou transverse → orienter maternité de référence' },
-      { nom: 'Bandelette urinaire (protéinurie)', objectif: 'Protéinurie + HTA au 3e trimestre = pré-éclampsie — hospitalisation immédiate requise' },
-      { nom: 'Examen des œdèmes (visage, mains, pieds)', objectif: 'Œdèmes du visage et des mains = signe d\'alerte pré-éclampsie sévère' },
-      { nom: 'NFS + groupage sanguin (bilan d\'accouchement)', objectif: 'Préparer éventuelle transfusion à l\'accouchement — compléter le dossier' },
-      { nom: 'Dépistage diabète gestationnel — HGPO 75g', objectif: 'Test de référence si non réalisé ou glycémie borderline — glycémie 0h, 1h, 2h après charge glucosée' },
-      { nom: 'Sérologie VIH de contrôle', objectif: 'Dernier test avant accouchement — permettre PTME immédiate si nouvelle positivité' },
-      { nom: 'Goutte épaisse / TDR paludisme (si symptômes)', objectif: 'Paludisme au 3e trimestre : accouchement prématuré, anémie sévère, petit poids de naissance' },
-      { nom: 'TPI 3 — Sulfadoxine-Pyriméthamine (SP)', objectif: '3e dose TPI si ≥ 4 semaines après TPI 2 — dernière dose recommandée' },
-      { nom: 'VAT 2 — Vaccin Antitétanique (4 semaines après VAT 1)', objectif: 'Immunité complète après 2 doses — protection dure 3 ans. Rappel VAT 3 à la prochaine grossesse' },
-      { nom: 'Supplémentation Fer + Acide Folique + Calcium 1,5 g/j', objectif: 'Calcium au 3e trimestre : réduit risque pré-éclampsie et assure ossification fœtale' },
-      { nom: 'Éducation pour la Santé — préparation à l\'accouchement', objectif: 'Identifier maternité, organiser transport, accompagnant. Reconnaître signes début de travail' },
+      { nom: 'Poids + TA + HU + BCF', obj: 'Surveillance croissance fœtale et état maternel' },
+      { nom: 'Bandelette urinaire', obj: 'Surveillance protéinurie et glucosurie' },
+      { nom: 'Sérologie VIH de contrôle', obj: 'Fenêtre sérologique : 2e test recommandé pour PTME' },
+      { nom: 'TPI 3 — Sulfadoxine-Pyriméthamine', obj: '3e dose TPI (≥ 4 semaines après TPI 2)' },
+      { nom: 'VAT 2 — Vaccin Antitétanique', obj: '2e dose VAT (4 semaines après VAT 1) — immunité complète' },
+      { nom: '🔬 Échographie 2 — S22 à S24', obj: 'Morphologie fœtale complète, dépistage malformations, sexe, placenta' },
     ],
-    conseils: 'Revenir au 8e mois. Préparer la valise de maternité. Avoir un moyen de transport disponible 24h/24. Identifier un accompagnant. Compter les mouvements de bébé chaque jour (≥ 10/jour).',
+    conseil: 'L\'échographie morphologique est cruciale — ne pas la manquer. Compter les mouvements du bébé.',
   },
   {
-    numero: 'CPN 4',
-    semaines: '9e mois — à partir de 36 SA — OBLIGATOIRE',
-    trimestre: 3,
+    id: 'CPN 4', mois: '6e mois (S23–S26)', trim: 2,
+    color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe',
     examens: [
-      { nom: 'Prise du poids et de la TA', objectif: 'Surveillance maximale — risque le plus élevé de pré-éclampsie et d\'éclampsie au 9e mois' },
-      { nom: 'Mesure finale de la Hauteur Utérine', objectif: 'Estimation clinique du volume fœtal, cohérence avec le terme' },
-      { nom: 'Auscultation BCF', objectif: 'Dernière confirmation vitalité fœtale avant accouchement' },
-      { nom: 'Présentation + engagement fœtal (4 manœuvres de Léopold)', objectif: 'Confirmer présentation céphalique engagée. Si siège persistant → césarienne programmée' },
-      { nom: 'Bandelette urinaire (protéinurie finale)', objectif: 'Dernière vérification avant accouchement — aucun signe pré-éclampsie non détecté' },
-      { nom: 'Pelvimétrie clinique (si indiquée)', objectif: 'Évaluer dimensions du bassin. Décider voie d\'accouchement : voie basse ou césarienne' },
-      { nom: 'Toucher vaginal (si indiqué)', objectif: 'Apprécier maturité cervicale, engagement fœtal, signes de travail imminent (score de Bishop)' },
-      { nom: 'Bilan pré-opératoire (si césarienne prévue)', objectif: 'NFS, groupage-Rhésus, TP-TCA, ECG — préparer le bloc opératoire en sécurité' },
-      { nom: 'Sérologie VIH finale (si résultats antérieurs absents)', objectif: 'Toute parturiente sans statut VIH connu doit être testée à l\'arrivée en salle de travail — PTME d\'urgence si positive' },
-      { nom: 'VAT de rappel (si schéma incomplet)', objectif: 'Compléter immunisation si VAT 1 et/ou VAT 2 non reçus lors des CPN précédentes' },
-      { nom: 'Remise du dossier obstétrical complet à la maternité', objectif: 'Tous les examens, sérologies, CPN précédentes doivent être disponibles pour la sage-femme/médecin accoucheur' },
-      { nom: 'Plan d\'accouchement formalisé avec la femme', objectif: 'Confirmer maternité, noter numéro d\'urgence 119, organiser transport 24h/24, accompagnant désigné' },
-      { nom: 'Éducation sur les signes de travail et urgences', objectif: 'Contractions régulières + rapprochées, rupture de la poche des eaux, saignements = aller immédiatement en maternité' },
+      { nom: 'Poids + TA + HU + BCF', obj: 'Fin du 2e trimestre — dépistage précoce complications' },
+      { nom: 'Bandelette urinaire', obj: 'Surveillance pré-éclampsie' },
+      { nom: 'Test HGPO 75g (diabète gestationnel)', obj: 'Glycémie 0h, 1h, 2h — diagnostic définitif diabète grossesse' },
+      { nom: 'NFS + bilan de contrôle', obj: 'Préparer 3e trimestre, s\'assurer absence anémie' },
+      { nom: 'Calcium 1,5 g/j (début)', obj: 'Réduit risque pré-éclampsie + ossification fœtale' },
     ],
-    conseils: 'La CPN4 est OBLIGATOIRE — ne jamais la manquer. Rester à proximité de la maternité. Aller en urgence si : contractions toutes les 5 min, perte des eaux, saignements abondants, bébé ne bouge plus. APPELER LE 119 EN CAS D\'URGENCE.',
+    conseil: 'Début du 3e trimestre approche. Penser à préparer la valise de maternité.',
+  },
+  {
+    id: 'CPN 5', mois: '7e mois (S27–S31)', trim: 3,
+    color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe',
+    examens: [
+      { nom: 'Poids + TA + HU + BCF', obj: 'Risque pré-éclampsie augmente — surveillance rapprochée' },
+      { nom: 'Présentation fœtale (palper de Léopold)', obj: 'Vérifier position tête en bas. Si siège → orienter spécialiste' },
+      { nom: 'Mouvements actifs fœtaux', obj: 'Bébé doit bouger ≥ 10 fois/jour. Absence = urgence' },
+      { nom: 'Bandelette urinaire + œdèmes', obj: 'Œdèmes visage + TA + protéinurie = pré-éclampsie' },
+      { nom: 'NFS + groupage sanguin', obj: 'Préparer bilan accouchement' },
+      { nom: 'Sérologie VIH de contrôle', obj: 'Permettre PTME à l\'accouchement si nouvelle positivité' },
+    ],
+    conseil: 'Compter les mouvements de bébé chaque jour. Préparer la valise de maternité dès maintenant.',
+  },
+  {
+    id: 'CPN 6', mois: '8e mois (S32–S35)', trim: 3,
+    color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe',
+    examens: [
+      { nom: 'Poids + TA + HU + BCF', obj: 'Surveillance maximale — 3e trimestre = risque le plus élevé' },
+      { nom: 'Présentation fœtale finale', obj: 'Bébé doit être tête en bas. Si siège persistant → césarienne discutée' },
+      { nom: 'Bandelette urinaire + œdèmes visage', obj: 'Alerte pré-éclampsie sévère' },
+      { nom: '🔬 Échographie 3 — S32 à S34', obj: 'Croissance fœtale, liquide amniotique, position placenta, profil biophysique' },
+      { nom: 'Pelvimétrie clinique (si indiquée)', obj: 'Évaluer bassin maternel — voie basse ou césarienne ?' },
+    ],
+    conseil: 'Rester à proximité de la maternité. Identifier moyen de transport 24h/24 et accompagnant.',
+  },
+  {
+    id: 'CPN 7', mois: '9e mois — toutes les 2 semaines — OBLIGATOIRE', trim: 3,
+    color: '#dc2626', bg: '#fef2f2', border: '#fecaca',
+    examens: [
+      { nom: 'Poids + TA + bandelette urinaire', obj: 'Surveillance maximale — risque le plus élevé pré-éclampsie/éclampsie' },
+      { nom: 'HU + BCF + mouvements fœtaux', obj: 'Confirmer bien-être fœtal avant accouchement' },
+      { nom: 'Présentation + engagement (Léopold)', obj: 'Confirmer engagement tête. Siège persistant → césarienne programmée' },
+      { nom: 'Toucher vaginal (si indiqué)', obj: 'Maturité cervicale, engagement, score de Bishop — signes travail' },
+      { nom: 'Bilan pré-opératoire complet', obj: 'NFS, groupage-Rh, TP-TCA, ECG si césarienne prévue' },
+      { nom: 'VIH final (si résultats absents)', obj: 'Toute parturiente sans résultat VIH = test à la salle de travail' },
+      { nom: 'VAT rappel (si schéma incomplet)', obj: 'Compléter immunisation si VAT non terminé' },
+      { nom: 'Remise dossier obstétrical + plan accouchement', obj: 'Tous résultats à la maternité. Confirmer transport, accompagnant, n° 119' },
+    ],
+    conseil: 'CPN OBLIGATOIRES au 9e mois toutes les 2 semaines. APPELER LE 119 si : contractions régulières, perte eaux, saignements, bébé ne bouge plus.',
   },
 ]
 
-const SIGNES_DANGER = [
-  {
-    titre: 'Saignements vaginaux',
-    icon: '🩸',
-    color: '#dc2626',
-    bg: '#fef2f2',
-    urgence: true,
-    desc: 'À n\'importe quel moment de la grossesse, tout saignement doit être signalé IMMÉDIATEMENT.',
-    cat: '→ Fausse couche, placenta prævia, hématome rétroplacentaire.',
-    cat2: '🚨 Se rendre en urgence à la maternité.',
-  },
-  {
-    titre: 'Hypertension / Pré-éclampsie',
-    icon: '💓',
-    color: '#dc2626',
-    bg: '#fef2f2',
-    urgence: true,
-    desc: 'TA ≥ 140/90 mmHg après 20 SA + œdèmes + albumine dans les urines.',
-    cat: '→ Convulsions (éclampsie), risque vital mère et bébé.',
-    cat2: '🚨 Hospitalisation immédiate obligatoire.',
-  },
-  {
-    titre: 'Contractions avant 37 semaines',
-    icon: '⚡',
-    color: '#d97706',
-    bg: '#fffbeb',
-    urgence: true,
-    desc: 'Contractions régulières et douloureuses avant le terme = menace d\'accouchement prématuré.',
-    cat: '→ Bébé prématuré, complications respiratoires.',
-    cat2: '🚨 Consulter en urgence pour tocolyse (médicaments stoppant le travail).',
-  },
-  {
-    titre: 'Absence de mouvements fœtaux',
-    icon: '👶',
-    color: '#dc2626',
-    bg: '#fef2f2',
-    urgence: true,
-    desc: 'Le bébé doit bouger ≥ 10 fois/jour après 28 SA. Moins de 10 mouvements en 12h = alarme.',
-    cat: '→ Souffrance fœtale, mort fœtale in utero.',
-    cat2: '🚨 Aller en urgence pour monitorage du rythme cardiaque fœtal (CTG).',
-  },
-  {
-    titre: 'Perte de liquide amniotique',
-    icon: '💧',
-    color: '#1d4ed8',
-    bg: '#eff6ff',
-    urgence: true,
-    desc: 'Écoulement soudain de liquide clair (rupture prématurée des membranes = RPM).',
-    cat: '→ Infection fœtale (chorioamniotite), cordon procident.',
-    cat2: '🚨 Maternité immédiatement, ne pas attendre les contractions.',
-  },
-  {
-    titre: 'Maux de tête violents + vision trouble',
-    icon: '🤕',
-    color: '#dc2626',
-    bg: '#fef2f2',
-    urgence: true,
-    desc: 'Associés à des phosphènes (éclairs lumineux) = signe de pré-éclampsie sévère.',
-    cat: '→ Risque de crise convulsive (éclampsie).',
-    cat2: '🚨 Urgence vitale — appeler le 119.',
-  },
-  {
-    titre: 'Fièvre ≥ 38°C',
-    icon: '🌡️',
-    color: '#d97706',
-    bg: '#fffbeb',
-    urgence: false,
-    desc: 'Toute fièvre pendant la grossesse doit être prise au sérieux.',
-    cat: '→ Infection urinaire, paludisme, listériose, toxoplasmose.',
-    cat2: '⚠️ Consulter rapidement sans automédication.',
-  },
-  {
-    titre: 'Douleurs épigastriques (creux de l\'estomac)',
-    icon: '😣',
-    color: '#d97706',
-    bg: '#fffbeb',
-    urgence: true,
-    desc: 'Douleur en barre sous les côtes droites = signe du syndrome HELLP (complication sévère).',
-    cat: '→ Destruction des globules rouges, atteinte hépatique.',
-    cat2: '🚨 Hospitalisation immédiate.',
-  },
+const CPON = {
+  delai: 'Dans les 6 semaines après l\'accouchement (idéalement avant J42)',
+  examens: [
+    { nom: 'Examen général de la mère', obj: 'Poids, TA, cicatrice césarienne ou épisiotomie, involution utérine' },
+    { nom: 'Examen des seins', obj: 'Évaluer l\'allaitement, dépister engorgement, mastite, abcès' },
+    { nom: 'Dépistage dépression post-partum (Edinburgh)', obj: 'Score EPDS — dépression post-partum touche 10 à 20% des mères' },
+    { nom: 'Frottis cervical (si non fait pendant grossesse)', obj: 'Dépistage cancer du col de l\'utérus' },
+    { nom: 'NFS si anémie en fin de grossesse', obj: 'Vérifier récupération hémoglobine après accouchement' },
+    { nom: 'Vaccination et suivi du nouveau-né', obj: 'BCG, VPO, Hépatite B à la naissance — vérifier carnet vaccinal' },
+    { nom: 'Counseling planification familiale', obj: 'Choisir contraception adaptée à l\'allaitement (DIU, progestatif seul)' },
+    { nom: 'Counseling allaitement maternel exclusif', obj: 'Soutien, technique, prévention IST et PTME' },
+  ],
+}
+
+const SIGNES = [
+  { titre: 'Saignements vaginaux', icon: '🩸', niveau: 'URGENCE VITALE', color: '#dc2626', desc: 'À tout moment de la grossesse. Toujours signaler immédiatement.', cause: 'Fausse couche, placenta prævia, hématome rétroplacentaire', action: '🚨 Maternité EN URGENCE' },
+  { titre: 'Hypertension + Pré-éclampsie', icon: '💓', niveau: 'URGENCE VITALE', color: '#dc2626', desc: 'TA ≥ 140/90 + œdèmes + albumine dans urines après 20 SA.', cause: 'Risque convulsions (éclampsie) — mortel pour mère et bébé', action: '🚨 Hospitalisation immédiate' },
+  { titre: 'Contractions avant 37 SA', icon: '⚡', niveau: 'URGENT', color: '#d97706', desc: 'Contractions régulières et douloureuses avant le terme.', cause: 'Accouchement prématuré — complications respiratoires bébé', action: '⚠️ Consulter en urgence' },
+  { titre: 'Bébé ne bouge plus', icon: '👶', niveau: 'URGENCE VITALE', color: '#dc2626', desc: 'Moins de 10 mouvements en 12h après 28 SA.', cause: 'Souffrance fœtale, mort fœtale in utero', action: '🚨 CTG en urgence à la maternité' },
+  { titre: 'Perte de liquide (RPM)', icon: '💧', niveau: 'URGENCE VITALE', color: '#dc2626', desc: 'Écoulement soudain de liquide clair — rupture prématurée des membranes.', cause: 'Infection fœtale, cordon procident', action: '🚨 Maternité IMMÉDIATEMENT, sans attendre contractions' },
+  { titre: 'Maux de tête + vision trouble', icon: '🤕', niveau: 'URGENCE VITALE', color: '#dc2626', desc: 'Phosphènes (éclairs) + céphalées violentes = pré-éclampsie sévère.', cause: 'Crise convulsive (éclampsie) imminente', action: '🚨 Appeler le 119 immédiatement' },
+  { titre: 'Fièvre ≥ 38°C', icon: '🌡️', niveau: 'URGENT', color: '#d97706', desc: 'Toute fièvre pendant la grossesse est sérieuse.', cause: 'Infection urinaire, paludisme, listériose', action: '⚠️ Consulter rapidement — pas d\'automédication' },
+  { titre: 'Douleur en barre sous les côtes', icon: '😣', niveau: 'URGENCE VITALE', color: '#dc2626', desc: 'Douleur épigastrique intense = signe du syndrome HELLP.', cause: 'Destruction globules rouges, atteinte hépatique grave', action: '🚨 Hospitalisation immédiate' },
 ]
 
-// ─── Alimentation ─────────────────────────────────────────────────────────────
-const ALIMENTS_POUR = [
-  { cat: '🥩 Protéines', items: ['Viande bien cuite (poulet, bœuf, poisson)', 'Œufs bien cuits', 'Légumineuses : niébé, arachides, haricots', 'Lait et produits laitiers pasteurisés'] },
-  { cat: '🥬 Légumes & Fruits', items: ['Légumes verts feuillus : ndolé, légumes-feuilles', 'Patate douce, manioc, banane plantain', 'Mangue, papaye, citron (vitamine C)', 'Tout légume bien lavé et cuit'] },
-  { cat: '🌾 Féculents & Énergie', items: ['Riz, maïs, igname, macabo', 'Mil, sorgho, pain complet', 'Huile de palme (avec modération)'] },
-  { cat: '💊 Suppléments essentiels', items: ['Acide folique 0,4 mg/j (dès la conception → S12)', 'Fer 30–60 mg/j (prévient anémie)', 'Calcium 1 000 mg/j (os du bébé)', 'Vitamine D (absorption calcium)', 'Iode (développement cérébral du bébé)'] },
+const ALIMENTS_OK = [
+  { cat: '🥩 Protéines', items: ['Viande bien cuite : poulet, bœuf, poisson', 'Légumineuses : niébé, haricots, arachides', 'Œufs bien cuits', 'Lait et laitages pasteurisés'] },
+  { cat: '🥬 Légumes & Fruits', items: ['Légumes verts : ndolé, légumes-feuilles', 'Patate douce, manioc, igname, macabo', 'Mangue, papaye, citron (vitamine C)', 'Tout légume bien lavé et cuit'] },
+  { cat: '💊 Suppléments essentiels', items: ['Acide folique 5 mg/j dès la conception', 'Fer 30–60 mg/j — prévient l\'anémie', 'Calcium 1,5 g/j dès le 3e trimestre', 'Vitamine D et Iode (développement cérébral)'] },
 ]
 
-const ALIMENTS_CONTRE = [
-  { icon:'🍺', label:'Alcool (aucune dose sûre)', desc:'Syndrome d\'alcoolisation fœtale, malformations cérébrales graves' },
-  { icon:'🚬', label:'Tabac et drogues', desc:'Retard de croissance fœtale, fausse couche, mort subite du nourrisson' },
-  { icon:'🐟', label:'Poisson cru (sashimi, sushi)', desc:'Risque listériose, anisakiase, contamination mercure' },
-  { icon:'🥩', label:'Viande rouge/volaille crue ou saignante', desc:'Toxoplasmose, salmonellose — cuire à cœur' },
-  { icon:'🧀', label:'Fromages à pâte molle non pasteurisés', desc:'Listériose pouvant provoquer mort fœtale in utero' },
-  { icon:'🥚', label:'Œufs crus (mayonnaise maison)', desc:'Salmonellose' },
-  { icon:'🌿', label:'Plantes médicinales non validées', desc:'Risque de contractions utérines, avortement spontané' },
-  { icon:'💊', label:'Automédication (ibuprofène, aspirine)', desc:'Fermeture prématurée du canal artériel, saignements' },
-  { icon:'☕', label:'Caféine excessive (> 200 mg/j)', desc:'Retard de croissance, fausse couche. Limiter à 1 café/jour' },
-  { icon:'🥫', label:'Conserves industrielles, charcuterie', desc:'Risque listériose, excès sel aggravant hypertension' },
+const ALIMENTS_NON = [
+  { icon:'🍺', item:'Alcool — AUCUNE dose sûre', raison:'Syndrome d\'alcoolisation fœtale, malformations cérébrales'},
+  { icon:'🚬', item:'Tabac et drogues', raison:'Retard croissance, fausse couche, mort subite nourrisson'},
+  { icon:'🐟', item:'Poisson cru / sushi', raison:'Listériose, mercure, anisakiase'},
+  { icon:'🥩', item:'Viande saignante ou crue', raison:'Toxoplasmose, salmonellose — cuire à cœur'},
+  { icon:'🧀', item:'Fromages pâte molle non pasteurisés', raison:'Listériose → mort fœtale in utero'},
+  { icon:'🌿', item:'Plantes médicinales non validées', raison:'Contractions utérines, avortement spontané'},
+  { icon:'💊', item:'Ibuprofène, aspirine (automédication)', raison:'Fermeture canal artériel, saignements fœtaux'},
+  { icon:'☕', item:'Caféine > 200 mg/j (> 1 café)', raison:'Retard de croissance, fausse couche'},
 ]
 
-// ─── Hygiène & Conseils généraux ─────────────────────────────────────────────
-const HYGIENE = [
-  { icon:'💧', title:'Hydratation', desc:'Boire 1,5 à 2 litres d\'eau par jour. L\'eau bouillie ou en bouteille est recommandée.' },
-  { icon:'🚿', title:'Hygiène corporelle', desc:'Toilette quotidienne. Éviter les bains trop chauds (risque d\'hyperthermie fœtale). Pas de douche vaginale.' },
-  { icon:'🦟', title:'Prévention paludisme', desc:'Utiliser moustiquaire imprégnée chaque nuit. La chimioprophylaxie à la sulfadoxine-pyriméthamine (SP) est recommandée au Cameroun à chaque CPN à partir du 2e trimestre.' },
-  { icon:'🚶‍♀️', title:'Activité physique', desc:'Marche 30 min/jour recommandée. Éviter efforts intenses, sports de contact, positions allongées sur le dos après 20 SA.' },
-  { icon:'😴', title:'Repos', desc:'Dormir sur le côté gauche favorise la circulation placentaire. Minimum 8h de sommeil. Éviter le stress intense.' },
-  { icon:'🦷', title:'Santé dentaire', desc:'Consulter un dentiste. Les hormones favorisent les caries et gingivites qui peuvent déclencher un accouchement prématuré.' },
-  { icon:'🐈', title:'Éviter les chats (litière)', desc:'Les excréments de chats peuvent transmettre la toxoplasmose, dangereuse pour le fœtus.' },
-  { icon:'🧪', title:'Produits chimiques', desc:'Éviter peintures, pesticides, produits ménagers agressifs sans ventilation. Porter des gants si nécessaire.' },
+const ALLAIT_STEPS = [
+  { n:'1', t:'Dans la 1ère heure de vie', d:'Contact peau à peau immédiat — stimule montée laiteuse et transfère anticorps (colostrum)' },
+  { n:'2', t:'Position correcte', d:'Ventre contre ventre. Tête, cou et dos alignés. Mère confortable, assise ou allongée' },
+  { n:'3', t:'Prise correcte du sein', d:'Bouche grande ouverte, lèvres éversées, menton touche le sein, aréole entière en bouche — PAS seulement le mamelon' },
+  { n:'4', t:'Signes d\'une bonne tétée', d:'Succion profonde et lente, déglutition audible, bébé se détache seul, sein ramolli après' },
+  { n:'5', t:'Fréquence', d:'À la demande — 8 à 12 fois par 24h. Vider un sein complètement avant l\'autre' },
+  { n:'6', t:'Soin des mamelons', d:'Laisser sécher à l\'air. Appliquer une goutte de lait maternel. Éviter savon et alcool' },
+]
+
+const HYGIENE_ITEMS = [
+  { icon:'💧', t:'Hydratation', d:'1,5 à 2 litres d\'eau par jour. Eau bouillie ou embouteillée recommandée.' },
+  { icon:'🦟', t:'Prévention paludisme', d:'Dormir sous moustiquaire imprégnée chaque nuit. Prendre la SP à chaque CPN.' },
+  { icon:'🚶‍♀️', t:'Activité physique', d:'Marche 30 min/jour. Éviter sports de contact, efforts intenses, position allongée sur le dos après 20 SA.' },
+  { icon:'😴', t:'Sommeil', d:'Dormir sur le côté gauche favorise la circulation placentaire. Minimum 8h/nuit.' },
+  { icon:'🦷', t:'Santé dentaire', d:'Consulter un dentiste. Gingivites et caries favorisées par hormones peuvent déclencher prématurité.' },
+  { icon:'🐈', t:'Éviter la litière des chats', d:'Risque toxoplasmose — dangereuse pour le fœtus.' },
+  { icon:'🧪', t:'Produits chimiques', d:'Éviter peintures, pesticides, produits ménagers agressifs. Porter des gants.' },
 ]
 
 export default function GrossessePage() {
-  const [tab, setTab] = useState<'cpn'|'danger'|'nutrition'|'allaitement'|'hygiene'>('cpn')
-  const [expandedCPN, setExpandedCPN] = useState<number | null>(0)
+  const [tab, setTab] = useState<'cpn'|'danger'|'nutrition'|'allaitement'|'conseils'>('cpn')
+  const [openCPN, setOpenCPN] = useState<number|null>(0)
+  const [showCPON, setShowCPON] = useState(false)
 
   const TABS = [
-    { id:'cpn',        icon:'📋', label:'Calendrier CPN' },
-    { id:'danger',     icon:'🚨', label:'Signes danger' },
-    { id:'nutrition',  icon:'🥗', label:'Nutrition' },
-    { id:'allaitement',icon:'🤱', label:'Allaitement' },
-    { id:'hygiene',    icon:'💡', label:'Conseils' },
+    { id:'cpn', icon:'📋', label:'CPN' },
+    { id:'danger', icon:'🚨', label:'Dangers' },
+    { id:'nutrition', icon:'🥗', label:'Nutrition' },
+    { id:'allaitement', icon:'🤱', label:'Allaitement' },
+    { id:'conseils', icon:'💡', label:'Conseils' },
   ]
 
+  const trimColors = { 1:'#0d4a3a', 2:'#1d4ed8', 3:'#7c3aed' }
+  const trimBg = { 1:'#e8f5ee', 2:'#eff6ff', 3:'#f5f3ff' }
+  const trimLabel = { 1:'T1', 2:'T2', 3:'T3' }
+
   return (
-    <div style={{ minHeight:'100vh', background:'#fdf6ee', fontFamily:'sans-serif', paddingBottom:80 }}>
+    <div style={{ minHeight:'100vh', background:'#faf7f4', fontFamily:'system-ui,sans-serif', paddingBottom:72 }}>
       <style>{`
-        @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-        .row:active { opacity:0.8; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .cpn-row:active { opacity:.75 }
       `}</style>
 
-      {/* ── HEADER ── */}
-      <div style={{ background:'linear-gradient(160deg,#78350f,#d97706)', padding:'14px 16px 18px' }}>
+      {/* HEADER */}
+      <div style={{ background:'linear-gradient(135deg,#78350f,#c2690a)', padding:'14px 16px 16px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, maxWidth:560, margin:'0 auto' }}>
-          <Link href="/dashboard" style={{ color:'rgba(255,255,255,0.7)', textDecoration:'none', fontSize:13, flexShrink:0 }}>← Retour</Link>
+          <Link href="/dashboard" style={{ color:'rgba(255,255,255,0.65)', textDecoration:'none', fontSize:13 }}>← Retour</Link>
           <div style={{ flex:1, textAlign:'center' }}>
-            <div style={{ color:'white', fontFamily:'Georgia,serif', fontSize:17, fontWeight:700 }}>🤰 Suivi de Grossesse</div>
-            <div style={{ color:'rgba(255,255,255,0.7)', fontSize:11, marginTop:2 }}>Guide éducatif santé maternelle & fœtale</div>
+            <div style={{ color:'white', fontSize:17, fontWeight:700 }}>🤰 Suivi de Grossesse</div>
+            <div style={{ color:'rgba(255,255,255,0.65)', fontSize:11, marginTop:1 }}>Guide éducatif santé maternelle & fœtale</div>
           </div>
-          <div style={{ width:48 }} />
+          <div style={{ width:44 }}/>
         </div>
       </div>
 
-      {/* ── BANDEAU DISCLAIMER ── */}
-      <div style={{ background:'#fffbeb', borderBottom:'1px solid #fde68a', padding:'8px 16px' }}>
-        <p style={{ color:'#92400e', fontSize:11, margin:0, textAlign:'center', lineHeight:1.5 }}>
-          ⚕️ <strong>Informations éducatives uniquement.</strong> Pour tout suivi médical, consultez un(e) sage-femme, médecin ou gynécologue.
+      {/* DISCLAIMER */}
+      <div style={{ background:'#fffbeb', borderBottom:'1px solid #fde68a', padding:'8px 16px', textAlign:'center' }}>
+        <p style={{ color:'#92400e', fontSize:11, margin:0 }}>
+          ⚕️ <strong>Informations éducatives uniquement.</strong> Consultez un(e) sage-femme, médecin ou gynécologue pour votre suivi.
         </p>
       </div>
 
-      {/* ── TABS ── */}
-      <div style={{ background:'white', borderBottom:'1px solid #fde68a', display:'grid', gridTemplateColumns:'repeat(5,1fr)', position:'sticky', top:0, zIndex:40 }}>
+      {/* TABS */}
+      <div style={{ background:'white', borderBottom:'2px solid #f0ebe3', display:'flex', position:'sticky', top:0, zIndex:40, overflowX:'auto' }}>
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id as any)} style={{ padding:'10px 4px', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#d97706':'#aaa', fontWeight:tab===t.id?700:400, fontSize:10, borderBottom:tab===t.id?'2.5px solid #d97706':'2.5px solid transparent', display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
-            <span style={{ fontSize:16 }}>{t.icon}</span>
-            <span style={{ lineHeight:1.2, textAlign:'center' }}>{t.label}</span>
+          <button key={t.id} onClick={() => setTab(t.id as any)} style={{ flex:1, minWidth:64, padding:'10px 4px', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#c2690a':'#9ca3af', fontWeight:tab===t.id?700:400, fontSize:10, borderBottom:tab===t.id?'2px solid #c2690a':'2px solid transparent', display:'flex', flexDirection:'column', alignItems:'center', gap:2, transition:'all .15s', marginBottom:-2 }}>
+            <span style={{ fontSize:18 }}>{t.icon}</span>
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
 
-      <div style={{ maxWidth:560, margin:'0 auto', padding:'16px 14px' }}>
+      <div style={{ maxWidth:560, margin:'0 auto', padding:'14px 14px' }}>
 
-        {/* ─── CALENDRIER CPN ─── */}
+        {/* ── CPN ── */}
         {tab==='cpn' && (
-          <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:12 }}>
-            <div style={{ background:'#fffbeb', border:'1px solid #fde68a', borderRadius:14, padding:'12px 14px' }}>
-              <p style={{ color:'#92400e', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>📋 Calendrier des Consultations Prénatales (CPN)</p>
-              <p style={{ color:'#78350f', fontSize:12, margin:0, lineHeight:1.6 }}>Le <strong>MINSANTÉ Cameroun</strong> et l'<strong>OMS</strong> recommandent au minimum <strong>4 CPN</strong> pour toute grossesse. Chaque consultation inclut des examens cliniques et biologiques ciblés.</p>
+          <div style={{ animation:'fadeUp .25s ease', display:'flex', flexDirection:'column', gap:10 }}>
+
+            {/* Résumé */}
+            <div style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 1px 8px rgba(0,0,0,0.06)' }}>
+              <p style={{ fontWeight:700, color:'#92400e', fontSize:14, margin:'0 0 6px' }}>📋 Calendrier officiel — Cameroun</p>
+              <p style={{ color:'#555', fontSize:12, margin:'0 0 10px', lineHeight:1.6 }}>
+                Le protocole camerounais prévoit <strong>7 consultations prénatales</strong> mensuelles + <strong>3 échographies</strong> recommandées + <strong>1 consultation post-natale (CPON)</strong> après l'accouchement.
+              </p>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                {[['T1','#e8f5ee','#0d4a3a','CPN 1'],['T2','#eff6ff','#1d4ed8','CPN 2–4'],['T3','#f5f3ff','#7c3aed','CPN 5–7'],['Post','#fef2f2','#dc2626','CPON']].map(([l,bg,c,sub])=>(
+                  <div key={l} style={{ background:bg, borderRadius:10, padding:'7px 12px', flex:1, minWidth:72, textAlign:'center' }}>
+                    <div style={{ color:c, fontWeight:800, fontSize:14 }}>{l}</div>
+                    <div style={{ color:c, fontSize:10, opacity:.8 }}>{sub}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
+            {/* Echographies */}
+            <div style={{ background:'#eff6ff', borderRadius:14, padding:'12px 14px', border:'1px solid #bfdbfe' }}>
+              <p style={{ color:'#1d4ed8', fontWeight:700, fontSize:13, margin:'0 0 8px' }}>🔬 3 Échographies recommandées</p>
+              {[
+                ['Écho 1','S11–S14','Datation, clarté nucale, vitalité fœtale, nombre de fœtus'],
+                ['Écho 2','S22–S24','Morphologie fœtale complète, dépistage malformations, sexe, placenta'],
+                ['Écho 3','S32–S34','Croissance fœtale, position, liquide amniotique, profil biophysique'],
+              ].map(([l,s,d],i)=>(
+                <div key={i} style={{ display:'flex', gap:10, marginBottom:i<2?8:0, alignItems:'flex-start' }}>
+                  <div style={{ background:'#1d4ed8', color:'white', borderRadius:8, padding:'2px 8px', fontSize:11, fontWeight:700, flexShrink:0, marginTop:1 }}>{l}</div>
+                  <div>
+                    <span style={{ color:'#1e40af', fontWeight:600, fontSize:12 }}>{s}</span>
+                    <span style={{ color:'#555', fontSize:11 }}> — {d}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CPN accordéon */}
             {CPN_DATA.map((cpn, idx) => (
-              <div key={idx} style={{ background:'white', borderRadius:18, overflow:'hidden', boxShadow:'0 2px 10px rgba(0,0,0,0.06)' }}>
-                {/* En-tête CPN */}
-                <button className="row" onClick={() => setExpandedCPN(expandedCPN===idx ? null : idx)} style={{ width:'100%', padding:'14px 16px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
-                  <div style={{ width:44, height:44, borderRadius:14, background: cpn.trimestre===1?'#e8f5ee':cpn.trimestre===2?'#eff6ff':'#fdf2f8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0, fontWeight:700, color: cpn.trimestre===1?'#0d4a3a':cpn.trimestre===2?'#1d4ed8':'#be185d' }}>
-                    {idx+1}
+              <div key={idx} style={{ background:'white', borderRadius:16, overflow:'hidden', boxShadow:'0 1px 8px rgba(0,0,0,0.05)', border:`1px solid ${cpn.border}` }}>
+                <button className="cpn-row" onClick={() => setOpenCPN(openCPN===idx?null:idx)} style={{ width:'100%', padding:'13px 16px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
+                  <div style={{ width:40, height:40, borderRadius:12, background:cpn.bg, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flexShrink:0, border:`1px solid ${cpn.border}` }}>
+                    <span style={{ color:cpn.color, fontWeight:800, fontSize:13, lineHeight:1 }}>{cpn.id.split(' ')[1]}</span>
+                    <span style={{ color:cpn.color, fontSize:8, opacity:.7 }}>{trimLabel[cpn.trim]}</span>
                   </div>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:700, color:'#d97706', fontSize:14 }}>{cpn.numero}</div>
-                    <div style={{ color:'#888', fontSize:12 }}>Semaines {cpn.semaines} · T{cpn.trimestre}</div>
+                    <div style={{ fontWeight:700, color:'#1a1a1a', fontSize:14 }}>{cpn.id}</div>
+                    <div style={{ color:'#888', fontSize:11, marginTop:1 }}>{cpn.mois}</div>
                   </div>
-                  <span style={{ color:'#d97706', fontSize:18, transform: expandedCPN===idx?'rotate(90deg)':'rotate(0deg)', transition:'transform .2s' }}>›</span>
+                  <span style={{ color:cpn.color, fontSize:18, transform:openCPN===idx?'rotate(90deg)':'none', transition:'transform .2s', flexShrink:0 }}>›</span>
                 </button>
 
-                {expandedCPN===idx && (
-                  <div style={{ padding:'0 16px 16px', animation:'fadeUp .2s ease' }}>
-                    {/* Tableau examens */}
-                    <div style={{ border:'1px solid #fde68a', borderRadius:12, overflow:'hidden', marginBottom:12 }}>
-                      <div style={{ background:'#d97706', padding:'8px 12px', display:'grid', gridTemplateColumns:'1fr 1.2fr', gap:8 }}>
-                        <span style={{ color:'white', fontWeight:700, fontSize:11 }}>EXAMEN</span>
-                        <span style={{ color:'white', fontWeight:700, fontSize:11 }}>OBJECTIF</span>
+                {openCPN===idx && (
+                  <div style={{ padding:'0 14px 14px', animation:'fadeUp .2s ease' }}>
+                    {/* Tableau */}
+                    <div style={{ borderRadius:12, overflow:'hidden', border:'1px solid #f0f0f0', marginBottom:10 }}>
+                      <div style={{ background:cpn.color, padding:'7px 12px', display:'grid', gridTemplateColumns:'1fr 1.3fr', gap:8 }}>
+                        <span style={{ color:'white', fontWeight:700, fontSize:10, textTransform:'uppercase', letterSpacing:.5 }}>Examen</span>
+                        <span style={{ color:'white', fontWeight:700, fontSize:10, textTransform:'uppercase', letterSpacing:.5 }}>Objectif</span>
                       </div>
-                      {cpn.examens.map((ex, i) => (
-                        <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 1.2fr', gap:8, padding:'9px 12px', background:i%2===0?'white':'#fffbeb', borderTop:'1px solid #fde68a' }}>
-                          <div style={{ color:'#92400e', fontSize:11, fontWeight:600, lineHeight:1.4 }}>{ex.nom}</div>
-                          <div style={{ color:'#78350f', fontSize:11, lineHeight:1.4 }}>{ex.objectif}</div>
+                      {cpn.examens.map((ex,i)=>(
+                        <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 1.3fr', gap:8, padding:'9px 12px', background:i%2===0?'white':'#fafafa', borderTop:'1px solid #f0f0f0' }}>
+                          <div style={{ color:cpn.color, fontSize:11, fontWeight:600, lineHeight:1.4 }}>{ex.nom}</div>
+                          <div style={{ color:'#555', fontSize:11, lineHeight:1.4 }}>{ex.obj}</div>
                         </div>
                       ))}
                     </div>
-                    {/* Conseil de la visite */}
-                    <div style={{ background:'#f0fdf4', borderRadius:10, padding:'10px 12px', border:'1px solid #86efac', display:'flex', gap:8 }}>
-                      <span style={{ fontSize:14, flexShrink:0 }}>💡</span>
-                      <p style={{ color:'#14532d', fontSize:12, margin:0, lineHeight:1.5 }}>{cpn.conseils}</p>
+                    {/* Conseil */}
+                    <div style={{ background:cpn.bg, borderRadius:10, padding:'10px 12px', display:'flex', gap:8, border:`1px solid ${cpn.border}` }}>
+                      <span style={{ flexShrink:0 }}>💡</span>
+                      <p style={{ color:cpn.color, fontSize:11, margin:0, lineHeight:1.5 }}>{cpn.conseil}</p>
                     </div>
                   </div>
                 )}
               </div>
             ))}
 
-            {/* Note finale CPN */}
-            <div style={{ background:'#eff6ff', borderRadius:14, padding:'12px 14px', border:'1px solid #bfdbfe' }}>
-              <p style={{ color:'#1e40af', fontSize:12, margin:0, lineHeight:1.6 }}>
-                ℹ️ En cas de <strong>grossesse à risque</strong> (HTA, diabète, gémellaire, ATCD fausse couche), des consultations supplémentaires peuvent être prescrites. Suivez les recommandations de votre médecin ou sage-femme.
-              </p>
+            {/* CPON */}
+            <div style={{ background:'white', borderRadius:16, overflow:'hidden', boxShadow:'0 1px 8px rgba(0,0,0,0.05)', border:'1px solid #fecaca' }}>
+              <button className="cpn-row" onClick={() => setShowCPON(!showCPON)} style={{ width:'100%', padding:'13px 16px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
+                <div style={{ width:40, height:40, borderRadius:12, background:'#fef2f2', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flexShrink:0, border:'1px solid #fecaca' }}>
+                  <span style={{ color:'#dc2626', fontWeight:800, fontSize:11, lineHeight:1 }}>CPON</span>
+                  <span style={{ color:'#dc2626', fontSize:8, opacity:.7 }}>Post-natal</span>
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontWeight:700, color:'#1a1a1a', fontSize:14 }}>Consultation Post-Natale</div>
+                  <div style={{ color:'#888', fontSize:11, marginTop:1 }}>{CPON.delai}</div>
+                </div>
+                <span style={{ color:'#dc2626', fontSize:18, transform:showCPON?'rotate(90deg)':'none', transition:'transform .2s' }}>›</span>
+              </button>
+              {showCPON && (
+                <div style={{ padding:'0 14px 14px', animation:'fadeUp .2s ease' }}>
+                  <div style={{ borderRadius:12, overflow:'hidden', border:'1px solid #f0f0f0', marginBottom:10 }}>
+                    <div style={{ background:'#dc2626', padding:'7px 12px', display:'grid', gridTemplateColumns:'1fr 1.3fr', gap:8 }}>
+                      <span style={{ color:'white', fontWeight:700, fontSize:10, textTransform:'uppercase' }}>Examen</span>
+                      <span style={{ color:'white', fontWeight:700, fontSize:10, textTransform:'uppercase' }}>Objectif</span>
+                    </div>
+                    {CPON.examens.map((ex,i)=>(
+                      <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 1.3fr', gap:8, padding:'9px 12px', background:i%2===0?'white':'#fafafa', borderTop:'1px solid #f0f0f0' }}>
+                        <div style={{ color:'#dc2626', fontSize:11, fontWeight:600, lineHeight:1.4 }}>{ex.nom}</div>
+                        <div style={{ color:'#555', fontSize:11, lineHeight:1.4 }}>{ex.obj}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ background:'#fef2f2', borderRadius:10, padding:'10px 12px', display:'flex', gap:8, border:'1px solid #fecaca' }}>
+                    <span>💡</span>
+                    <p style={{ color:'#dc2626', fontSize:11, margin:0, lineHeight:1.5 }}>La CPON est souvent négligée — elle est essentielle pour la santé de la mère et du nouveau-né. Ne pas la manquer.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ background:'#eff6ff', borderRadius:12, padding:'10px 14px', border:'1px solid #bfdbfe' }}>
+              <p style={{ color:'#1e40af', fontSize:11, margin:0, lineHeight:1.6 }}>ℹ️ En cas de grossesse à risque (HTA, diabète, gémellaire, antécédent fausse couche), des consultations supplémentaires peuvent être prescrites.</p>
             </div>
           </div>
         )}
 
-        {/* ─── SIGNES DE DANGER ─── */}
+        {/* ── DANGER ── */}
         {tab==='danger' && (
-          <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:10 }}>
-            <div style={{ background:'#fef2f2', border:'1.5px solid #fecaca', borderRadius:14, padding:'12px 14px' }}>
-              <p style={{ color:'#dc2626', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>🚨 Signes de danger — Ne jamais ignorer</p>
-              <p style={{ color:'#7f1d1d', fontSize:12, margin:0, lineHeight:1.5 }}>En cas de signe d'alerte, <strong>ne pas attendre</strong>. Se rendre immédiatement dans une structure sanitaire ou appeler le <strong>119 (SAMU)</strong>.</p>
+          <div style={{ animation:'fadeUp .25s ease', display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ background:'#fef2f2', borderRadius:14, padding:'12px 14px', border:'1.5px solid #fecaca' }}>
+              <p style={{ color:'#dc2626', fontWeight:700, fontSize:13, margin:'0 0 3px' }}>🚨 Ne jamais ignorer ces signaux</p>
+              <p style={{ color:'#7f1d1d', fontSize:12, margin:0 }}>En cas de signe d'alerte, ne pas attendre. Appeler le <strong>119</strong> ou aller immédiatement à la maternité.</p>
             </div>
 
-            {SIGNES_DANGER.map((s, i) => (
-              <div key={i} style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 2px 8px rgba(0,0,0,0.05)', borderLeft:`4px solid ${s.color}` }}>
+            {SIGNES.map((s,i)=>(
+              <div key={i} style={{ background:'white', borderRadius:14, padding:'14px', boxShadow:'0 1px 6px rgba(0,0,0,0.05)', borderLeft:`4px solid ${s.color}` }}>
                 <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-                  <div style={{ width:38, height:38, borderRadius:12, background:s.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{s.icon}</div>
+                  <div style={{ width:36, height:36, borderRadius:11, background:s.color+'15', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{s.icon}</div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:700, color:s.color, fontSize:13 }}>{s.titre}</div>
-                    {s.urgence && <span style={{ background:s.color, color:'white', borderRadius:6, padding:'1px 8px', fontSize:10, fontWeight:700 }}>URGENCE</span>}
+                    <span style={{ background:s.color, color:'white', borderRadius:6, padding:'1px 8px', fontSize:9, fontWeight:700 }}>{s.niveau}</span>
                   </div>
                 </div>
-                <p style={{ color:'#444', fontSize:12, margin:'0 0 5px', lineHeight:1.5 }}>{s.desc}</p>
-                <p style={{ color:'#666', fontSize:12, margin:'0 0 5px', lineHeight:1.5, fontStyle:'italic' }}>{s.cat}</p>
-                <p style={{ color:s.color, fontSize:12, margin:0, fontWeight:700 }}>{s.cat2}</p>
+                <p style={{ color:'#444', fontSize:12, margin:'0 0 4px', lineHeight:1.5 }}>{s.desc}</p>
+                <p style={{ color:'#777', fontSize:11, margin:'0 0 6px', fontStyle:'italic' }}>→ {s.cause}</p>
+                <p style={{ color:s.color, fontSize:12, fontWeight:700, margin:0 }}>{s.action}</p>
               </div>
             ))}
 
-            <div style={{ background:'#f0fdf4', borderRadius:14, padding:'12px 14px', border:'1px solid #86efac' }}>
-              <p style={{ color:'#14532d', fontSize:12, margin:0, lineHeight:1.6 }}>
-                ✅ <strong>Rappel :</strong> Aucun signe d'alarme ne doit être banalisé ou traité par automédication. Votre sage-femme ou médecin est votre premier recours. Ces informations sont données à titre éducatif uniquement.
-              </p>
-            </div>
+            <a href="tel:119" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, background:'linear-gradient(135deg,#7f1d1d,#dc2626)', borderRadius:16, padding:'16px', textDecoration:'none', boxShadow:'0 4px 16px rgba(220,38,38,0.3)' }}>
+              <span style={{ fontSize:24 }}>📞</span>
+              <div>
+                <div style={{ color:'white', fontWeight:800, fontSize:22, lineHeight:1 }}>119</div>
+                <div style={{ color:'rgba(255,255,255,0.75)', fontSize:11 }}>SAMU — Urgences médicales 24h/24</div>
+              </div>
+            </a>
           </div>
         )}
 
-        {/* ─── NUTRITION ─── */}
+        {/* ── NUTRITION ── */}
         {tab==='nutrition' && (
-          <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:12 }}>
+          <div style={{ animation:'fadeUp .25s ease', display:'flex', flexDirection:'column', gap:10 }}>
             <div style={{ background:'#f0fdf4', borderRadius:14, padding:'12px 14px', border:'1px solid #86efac' }}>
-              <p style={{ color:'#14532d', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>🥗 Alimentation pendant la grossesse</p>
-              <p style={{ color:'#166534', fontSize:12, margin:0, lineHeight:1.5 }}>Une bonne nutrition couvre les besoins de la mère ET du bébé. Les carences en fer, acide folique et calcium sont les plus fréquentes en Afrique subsaharienne.</p>
+              <p style={{ color:'#14532d', fontWeight:700, fontSize:13, margin:'0 0 3px' }}>🥗 Manger pour deux — mieux, pas plus</p>
+              <p style={{ color:'#166534', fontSize:12, margin:0 }}>Les carences en fer, acide folique et calcium sont les plus fréquentes au Cameroun pendant la grossesse.</p>
             </div>
 
-            {/* Aliments recommandés */}
-            <p style={{ color:'#15803d', fontWeight:700, fontSize:14, margin:'4px 0 0' }}>✅ Aliments et apports recommandés</p>
-            {ALIMENTS_POUR.map((cat, i) => (
-              <div key={i} style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
-                <div style={{ fontWeight:700, color:'#0d4a3a', fontSize:13, marginBottom:8 }}>{cat.cat}</div>
-                {cat.items.map((item, j) => (
-                  <div key={j} style={{ display:'flex', gap:8, marginBottom:5 }}>
-                    <span style={{ color:'#16a34a', flexShrink:0, fontWeight:700 }}>•</span>
+            <p style={{ color:'#15803d', fontWeight:700, fontSize:13, margin:'4px 0 0' }}>✅ Aliments à privilégier</p>
+            {ALIMENTS_OK.map((g,i)=>(
+              <div key={i} style={{ background:'white', borderRadius:14, padding:'12px 14px', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+                <p style={{ fontWeight:700, color:'#0d4a3a', fontSize:13, margin:'0 0 8px' }}>{g.cat}</p>
+                {g.items.map((item,j)=>(
+                  <div key={j} style={{ display:'flex', gap:8, marginBottom:4 }}>
+                    <span style={{ color:'#16a34a', flexShrink:0 }}>•</span>
                     <span style={{ color:'#555', fontSize:12, lineHeight:1.5 }}>{item}</span>
                   </div>
                 ))}
               </div>
             ))}
 
-            {/* Aliments contre-indiqués */}
-            <p style={{ color:'#dc2626', fontWeight:700, fontSize:14, margin:'8px 0 0' }}>❌ Aliments et substances à éviter absolument</p>
-            <div style={{ background:'white', borderRadius:16, overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
-              {ALIMENTS_CONTRE.map((a, i) => (
-                <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'11px 14px', borderBottom:i<ALIMENTS_CONTRE.length-1?'1px solid #fef2f2':'none' }}>
-                  <span style={{ fontSize:20, flexShrink:0 }}>{a.icon}</span>
+            <p style={{ color:'#dc2626', fontWeight:700, fontSize:13, margin:'8px 0 0' }}>❌ À éviter absolument</p>
+            <div style={{ background:'white', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              {ALIMENTS_NON.map((a,i)=>(
+                <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'10px 14px', borderTop:i>0?'1px solid #fef2f2':'none' }}>
+                  <span style={{ fontSize:18, flexShrink:0 }}>{a.icon}</span>
                   <div>
-                    <div style={{ fontWeight:700, color:'#dc2626', fontSize:12 }}>{a.label}</div>
-                    <div style={{ color:'#888', fontSize:11, lineHeight:1.4, marginTop:2 }}>{a.desc}</div>
+                    <div style={{ fontWeight:700, color:'#dc2626', fontSize:12 }}>{a.item}</div>
+                    <div style={{ color:'#888', fontSize:11, marginTop:2 }}>{a.raison}</div>
                   </div>
                 </div>
               ))}
-            </div>
-
-            <div style={{ background:'#eff6ff', borderRadius:14, padding:'12px 14px', border:'1px solid #bfdbfe' }}>
-              <p style={{ color:'#1e40af', fontSize:12, margin:0, lineHeight:1.6 }}>
-                ℹ️ En cas de nausées sévères, de perte de poids ou de difficultés alimentaires, consultez votre médecin. Ces informations sont éducatives — votre professionnel de santé adaptera vos besoins à votre situation.
-              </p>
             </div>
           </div>
         )}
 
-        {/* ─── ALLAITEMENT MATERNEL ─── */}
+        {/* ── ALLAITEMENT ── */}
         {tab==='allaitement' && (
-          <div style={{animation:'fadeUp .3s ease',display:'flex',flexDirection:'column',gap:12}}>
-
-            {/* Disclaimer */}
-            <div style={{background:'#eff6ff',borderRadius:14,padding:'10px 14px',border:'1px solid #bfdbfe'}}>
-              <p style={{color:'#1e40af',fontSize:12,margin:0,lineHeight:1.5}}>
-                🤱 Ces informations sont <strong>éducatives</strong>. Pour un soutien personnalisé à l\'allaitement, consultez votre sage-femme, un médecin ou un conseiller en lactation certifié.
-              </p>
+          <div style={{ animation:'fadeUp .25s ease', display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ background:'#ecfdf5', borderRadius:14, padding:'12px 14px', border:'1px solid #6ee7b7' }}>
+              <p style={{ color:'#065f46', fontWeight:700, fontSize:13, margin:'0 0 3px' }}>🤱 Allaitement maternel exclusif recommandé</p>
+              <p style={{ color:'#047857', fontSize:12, margin:0 }}>OMS & MINSANTÉ Cameroun : <strong>exclusif 6 mois</strong>, puis avec alimentation complémentaire jusqu'à <strong>2 ans et au-delà</strong>.</p>
             </div>
 
-            {/* Pourquoi allaiter */}
-            <div style={{background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',borderRadius:18,padding:'16px',border:'1.5px solid #6ee7b7'}}>
-              <p style={{fontWeight:700,color:'#065f46',fontSize:14,margin:'0 0 10px'}}>✅ Pourquoi l\'allaitement maternel est recommandé</p>
-              <p style={{color:'#047857',fontSize:12,margin:'0 0 8px',lineHeight:1.6,fontStyle:'italic'}}>L'OMS et le MINSANTÉ Cameroun recommandent l\'allaitement maternel <strong>exclusif pendant les 6 premiers mois</strong>, puis avec alimentation complémentaire jusqu'à 2 ans et au-delà.</p>
-              {[
-                ['Pour le bébé','Anticorps et immunité naturelle contre infections','Réduction risque diarrhée, pneumonies, otites','Développement cérébral optimal (DHA, lactoferrine)','Prévention obésité, diabète, allergies à long terme','Développement affectif et lien mère-enfant','Lait toujours à bonne température, stérile, gratuit'],
-                ['Pour la mère','Retour en forme plus rapide après accouchement','Réduction risque cancer du sein et des ovaires','Contraception naturelle partielle (si allaitement exclusif)','Économie financière importante (lait artificiel coûteux)','Réduction risque dépression post-partum'],
-              ].map((g,i)=>(
-                <div key={i} style={{marginBottom:i===0?10:0}}>
-                  <div style={{fontWeight:700,color:'#065f46',fontSize:12,marginBottom:5}}>{i===0?'👶':'👩'} {g[0]}</div>
-                  {g.slice(1).map((item,j)=>(
-                    <div key={j} style={{display:'flex',gap:8,marginBottom:4}}>
-                      <span style={{color:'#10b981',flexShrink:0}}>•</span>
-                      <span style={{color:'#065f46',fontSize:11,lineHeight:1.5}}>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            {/* Mise au sein */}
-            <div style={{background:'white',borderRadius:16,padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
-              <p style={{fontWeight:700,color:'#92400e',fontSize:14,margin:'0 0 10px'}}>🤱 Mise au sein — Technique correcte</p>
-              {[
-                {step:'1',title:'Allaiter dans la première heure de vie',desc:'Le contact peau à peau immédiat après naissance stimule la montée laiteuse et renforce l\'immunité du nouveau-né (colostrum)'},
-                {step:'2',title:'Position correcte de la mère',desc:'Assise confortablement ou allongée. Tenir bébé ventre contre ventre. Sa tête, son cou et son dos alignés en ligne droite'},
-                {step:'3',title:'Prise correcte du sein (bonne succion)',desc:'Bouche grande ouverte, lèvres éversées vers l\'extérieur, menton touchant le sein, aréole bien en bouche. Pas seulement le mamelon !'},
-                {step:'4',title:'Signes d\'une bonne tétée',desc:'Mouvements de succion profonds et lents, déglutition audible, bébé se détache spontanément, sein ramolli après la tétée'},
-                {step:'5',title:'Fréquence et durée',desc:'À la demande, 8 à 12 fois par 24h en période néonatale. Durée variable (10 à 30 min). Vider complètement un sein avant de passer à l\'autre'},
-                {step:'6',title:'Soin des mamelons',desc:'Laisser sécher à l\'air après la tétée. Une goutte de lait maternel appliquée sur le mamelon favorise la cicatrisation. Éviter savon ou alcool'},
-              ].map((s,i)=>(
-                <div key={i} style={{display:'flex',gap:10,marginBottom:i<5?10:0}}>
-                  <div style={{width:28,height:28,borderRadius:'50%',background:'#d97706',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>{s.step}</div>
-                  <div>
-                    <div style={{fontWeight:700,color:'#92400e',fontSize:12,marginBottom:2}}>{s.title}</div>
-                    <p style={{color:'#555',fontSize:11,margin:0,lineHeight:1.5}}>{s.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Signes bébé bien nourri */}
-            <div style={{background:'white',borderRadius:16,padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
-              <p style={{fontWeight:700,color:'#0d4a3a',fontSize:14,margin:'0 0 10px'}}>📊 Comment savoir si bébé est bien nourri ?</p>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                {[
-                  {icon:'⚖️',label:'Poids',ok:'Retrouve son poids de naissance à J10–J14',nok:'Perte > 10% du poids = consulter'},
-                  {icon:'💧',label:'Couches',ok:'6 à 8 couches mouillées/jour après J4',nok:'Moins de 6 couches = allaitement insuffisant'},
-                  {icon:'💩',label:'Selles',ok:'3 à 4 selles jaune d\'or par jour (J4+)',nok:'Selles vertes persistantes = vérifier position'},
-                  {icon:'😴',label:'Comportement',ok:'Bébé calme, satisfait après la tétée',nok:'Pleurs incessants après tétée = consulter'},
-                ].map((c,i)=>(
-                  <div key={i} style={{background:'#f0fdf4',borderRadius:12,padding:'10px'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
-                      <span style={{fontSize:16}}>{c.icon}</span>
-                      <span style={{fontWeight:700,color:'#0d4a3a',fontSize:12}}>{c.label}</span>
-                    </div>
-                    <div style={{color:'#16a34a',fontSize:10,lineHeight:1.4,marginBottom:4}}>✓ {c.ok}</div>
-                    <div style={{color:'#dc2626',fontSize:10,lineHeight:1.4}}>⚠ {c.nok}</div>
+            {/* Bénéfices */}
+            <div style={{ background:'white', borderRadius:14, padding:'14px', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              <p style={{ fontWeight:700, color:'#0d4a3a', fontSize:13, margin:'0 0 10px' }}>✅ Pourquoi allaiter ?</p>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                {[['👶 Pour bébé',['Anticorps et immunité','Développement cérébral','Prévention diarrhée, otites','Lait gratuit, stérile, chaud']],['👩 Pour la mère',['Retour en forme plus vite','Réduit risque cancer sein','Contraception naturelle','Économise l\'argent']]].map(([t,items])=>(
+                  <div key={t} style={{ background:'#f0fdf4', borderRadius:10, padding:'10px' }}>
+                    <p style={{ fontWeight:700, color:'#065f46', fontSize:12, margin:'0 0 6px' }}>{t}</p>
+                    {items.map((it,j)=><div key={j} style={{ color:'#166534', fontSize:11, marginBottom:3 }}>• {it}</div>)}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Problèmes fréquents */}
-            <div style={{background:'white',borderRadius:16,padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
-              <p style={{fontWeight:700,color:'#7c3aed',fontSize:14,margin:'0 0 10px'}}>🛠️ Problèmes fréquents et solutions</p>
-              {[
-                {pb:'Mamelons douloureux / crevasses',sol:'Corriger la position de succion. Appliquer lait maternel après tétée. Si douleur persiste → consulter sage-femme',urgence:false},
-                {pb:'Engorgement mammaire (seins tendus, durs)',sol:'Tétées fréquentes et efficaces. Massage doux avant tétée. Compresse tiède avant, froide après. Ne pas arrêter l\'allaitement',urgence:false},
-                {pb:'Mastite (sein rouge, chaud, douloureux + fièvre)',sol:'Continuer à allaiter du côté atteint (sécuritaire pour bébé). Consulter médecin rapidement → antibiotiques nécessaires si infection',urgence:true},
-                {pb:'Abcès du sein (boule douloureuse fluctuante)',sol:'URGENCE MÉDICALE — ne pas drainer soi-même. Consulter chirurgien en urgence. Peut nécessiter drainage chirurgical',urgence:true},
-                {pb:'Montée laiteuse tardive (> J5)',sol:'Tétées très fréquentes, contact peau à peau prolongé, boire suffisamment. Si bébé perd trop de poids → compléments ponctuels + soutien professionnel',urgence:false},
-                {pb:'Bébé refuse le sein',sol:'Vérifier position, essayer différentes positions. Allaiter dans un endroit calme. Faire du peau à peau. Écarter refus lié à une douleur (muguet, fein court)',urgence:false},
-              ].map((p,i)=>(
-                <div key={i} style={{borderLeft:`3px solid ${p.urgence?'#dc2626':'#7c3aed'}`,paddingLeft:12,marginBottom:i<5?10:0}}>
-                  <div style={{fontWeight:700,color:p.urgence?'#dc2626':'#7c3aed',fontSize:12,marginBottom:3}}>
-                    {p.urgence&&'🚨 '}{p.pb}
+            {/* Technique */}
+            <div style={{ background:'white', borderRadius:14, padding:'14px', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              <p style={{ fontWeight:700, color:'#92400e', fontSize:13, margin:'0 0 10px' }}>🤱 Technique correcte — Étape par étape</p>
+              {ALLAIT_STEPS.map((s,i)=>(
+                <div key={i} style={{ display:'flex', gap:10, marginBottom:i<5?10:0 }}>
+                  <div style={{ width:26, height:26, borderRadius:'50%', background:'#d97706', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:12, flexShrink:0 }}>{s.n}</div>
+                  <div>
+                    <div style={{ fontWeight:700, color:'#92400e', fontSize:12, marginBottom:2 }}>{s.t}</div>
+                    <p style={{ color:'#555', fontSize:11, margin:0, lineHeight:1.5 }}>{s.d}</p>
                   </div>
-                  <p style={{color:'#555',fontSize:11,margin:0,lineHeight:1.5}}>{p.sol}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Problèmes fréquents */}
+            <div style={{ background:'white', borderRadius:14, padding:'14px', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              <p style={{ fontWeight:700, color:'#7c3aed', fontSize:13, margin:'0 0 10px' }}>🛠️ Problèmes fréquents</p>
+              {[
+                {p:'Crevasses / Mamelons douloureux', s:'Corriger la position de succion. Appliquer lait maternel. Consulter sage-femme si douleur persiste.', u:false},
+                {p:'Engorgement mammaire', s:'Tétées fréquentes. Massage doux. Compresse tiède avant, froide après. Ne PAS arrêter l\'allaitement.', u:false},
+                {p:'Mastite (sein rouge, chaud + fièvre)', s:'Continuer à allaiter. Consulter médecin rapidement — antibiotiques souvent nécessaires.', u:true},
+                {p:'Abcès du sein', s:'URGENCE CHIRURGICALE. Ne pas drainer seul. Consulter chirurgien immédiatement.', u:true},
+              ].map((p,i)=>(
+                <div key={i} style={{ borderLeft:`3px solid ${p.u?'#dc2626':'#7c3aed'}`, paddingLeft:10, marginBottom:i<3?10:0 }}>
+                  <div style={{ fontWeight:700, color:p.u?'#dc2626':'#7c3aed', fontSize:12, marginBottom:2 }}>{p.u&&'🚨 '}{p.p}</div>
+                  <p style={{ color:'#555', fontSize:11, margin:0, lineHeight:1.5 }}>{p.s}</p>
                 </div>
               ))}
             </div>
 
             {/* Contre-indications */}
-            <div style={{background:'#fef2f2',borderRadius:16,padding:'16px',border:'1.5px solid #fecaca'}}>
-              <p style={{fontWeight:700,color:'#dc2626',fontSize:14,margin:'0 0 10px'}}>❌ Contre-indications à l\'allaitement maternel</p>
-              <p style={{color:'#7f1d1d',fontSize:11,margin:'0 0 10px',lineHeight:1.5,fontStyle:'italic'}}>Ces situations sont rares. Dans le doute, toujours consulter avant d'arrêter l\'allaitement.</p>
-
-              <div style={{marginBottom:12}}>
-                <p style={{fontWeight:700,color:'#dc2626',fontSize:12,margin:'0 0 8px'}}>Contre-indications absolues (allaitement INTERDIT) :</p>
-                {[
-                  'Mère VIH positive au Cameroun (PTME) — sauf si accès garanti aux ARV + eau potable (décision médicale)',
-                  'Mère sous chimiothérapie anticancéreuse active',
-                  'Mère sous traitement radioactif (iode radioactif)',
-                  'Galactosémie classique chez le nouveau-né (maladie génétique rare — tests néonataux)',
-                  'Mère toxicomane (héroïne, cocaïne, méthamphétamine non substituée)',
-                ].map((item,i)=>(
-                  <div key={i} style={{display:'flex',gap:8,marginBottom:5}}>
-                    <span style={{color:'#dc2626',flexShrink:0,fontWeight:700}}>✗</span>
-                    <span style={{color:'#7f1d1d',fontSize:11,lineHeight:1.5}}>{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{marginBottom:12}}>
-                <p style={{fontWeight:700,color:'#d97706',fontSize:12,margin:'0 0 8px'}}>Contre-indications relatives (décision médicale au cas par cas) :</p>
-                {[
-                  'Mère sous certains médicaments : anticoagulants, certains antibiotiques, antiépileptiques → demander avis médical',
-                  'Tuberculose maternelle active non traitée (reprendre après 2 semaines de traitement)',
-                  'Herpès actif sur le sein (pas dans d\'autres localisations)',
-                  'Alcoolisme sévère (consommation modérée et ponctuelle : attendre 2h après la consommation)',
-                  'Nouveau-né prématuré ou très petit poids : allaitement possible mais sous surveillance néonatale',
-                ].map((item,i)=>(
-                  <div key={i} style={{display:'flex',gap:8,marginBottom:5}}>
-                    <span style={{color:'#d97706',flexShrink:0,fontWeight:700}}>⚠</span>
-                    <span style={{color:'#78350f',fontSize:11,lineHeight:1.5}}>{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{background:'white',borderRadius:10,padding:'10px'}}>
-                <p style={{fontWeight:700,color:'#0d4a3a',fontSize:12,margin:'0 0 6px'}}>✅ L'allaitement N'est PAS contre-indiqué en cas de :</p>
-                {[
-                  'Hépatite B (vacciner le nouveau-né à la naissance)',
-                  'Mastite (infection du sein) — continuer à allaiter',
-                  'Prise d\'antibiotiques habituels, paracétamol, ibuprofène',
-                  'Covid-19 (le lait maternel contient des anticorps protecteurs)',
-                  'Chirurgie mammaire antérieure (sauf ablation des canaux galactophores)',
-                ].map((item,i)=>(
-                  <div key={i} style={{display:'flex',gap:8,marginBottom:4}}>
-                    <span style={{color:'#16a34a',flexShrink:0}}>✓</span>
-                    <span style={{color:'#555',fontSize:11,lineHeight:1.5}}>{item}</span>
+            <div style={{ background:'#fef2f2', borderRadius:14, padding:'14px', border:'1.5px solid #fecaca' }}>
+              <p style={{ fontWeight:700, color:'#dc2626', fontSize:13, margin:'0 0 8px' }}>❌ Contre-indications absolues</p>
+              {['Mère VIH+ au Cameroun (sauf accès garantis ARV + eau potable — décision médicale)','Chimiothérapie anticancéreuse active','Traitement radioactif (iode radioactif)','Galactosémie classique chez le nouveau-né','Mère sous drogues dures (héroïne, cocaïne)'].map((c,i)=>(
+                <div key={i} style={{ display:'flex', gap:7, marginBottom:5 }}>
+                  <span style={{ color:'#dc2626', fontWeight:700, flexShrink:0 }}>✗</span>
+                  <span style={{ color:'#7f1d1d', fontSize:11, lineHeight:1.5 }}>{c}</span>
+                </div>
+              ))}
+              <div style={{ background:'white', borderRadius:10, padding:'10px', marginTop:10 }}>
+                <p style={{ fontWeight:700, color:'#0d4a3a', fontSize:12, margin:'0 0 6px' }}>✅ PAS contre-indiqué :</p>
+                {['Hépatite B (vacciner le nouveau-né à la naissance)','Mastite — continuer à allaiter','Antibiotiques habituels, paracétamol','Covid-19 — le lait contient des anticorps protecteurs'].map((c,i)=>(
+                  <div key={i} style={{ display:'flex', gap:7, marginBottom:4 }}>
+                    <span style={{ color:'#16a34a', flexShrink:0 }}>✓</span>
+                    <span style={{ color:'#444', fontSize:11, lineHeight:1.5 }}>{c}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Sevrage */}
-            <div style={{background:'white',borderRadius:16,padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
-              <p style={{fontWeight:700,color:'#0d4a3a',fontSize:14,margin:'0 0 10px'}}>🌱 Sevrage et alimentation complémentaire</p>
-              {[
-                {age:'0 à 6 mois',desc:'Allaitement maternel EXCLUSIF — ni eau, ni jus, ni bouillies. Le lait maternel suffit à tous les besoins',color:'#16a34a'},
-                {age:'6 mois',desc:'Introduction alimentation complémentaire : bouillies enrichies, purées légumes, viandes mixées — TOUT EN CONTINUANT l\'allaitement',color:'#d97706'},
-                {age:'6 à 12 mois',desc:'Allaitement + alimentation diversifiée 2 à 3 repas/jour. Éviter sel, sucre, miel (< 1 an)',color:'#0891b2'},
-                {age:'12 mois à 2 ans+',desc:'Allaitement toujours bénéfique en complément de l\'alimentation familiale. L\'OMS recommande de continuer jusqu\'à 2 ans minimum',color:'#7c3aed'},
-              ].map((s,i)=>(
-                <div key={i} style={{display:'flex',gap:10,marginBottom:i<3?10:0,padding:'10px 12px',background:'#f9fafb',borderRadius:10,borderLeft:`3px solid ${s.color}`}}>
-                  <div style={{flexShrink:0,background:s.color,color:'white',borderRadius:8,padding:'3px 8px',fontSize:10,fontWeight:700,alignSelf:'flex-start',whiteSpace:'nowrap'}}>{s.age}</div>
-                  <p style={{color:'#444',fontSize:12,margin:0,lineHeight:1.5}}>{s.desc}</p>
+            <div style={{ background:'white', borderRadius:14, padding:'14px', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              <p style={{ fontWeight:700, color:'#0d4a3a', fontSize:13, margin:'0 0 10px' }}>🌱 Sevrage progressif</p>
+              {[['#16a34a','0–6 mois','Allaitement EXCLUSIF. Pas d\'eau, jus ni bouillie. Le lait maternel suffit.'],['#d97706','6 mois','Introduire purées, bouillies enrichies, viandes mixées — EN CONTINUANT l\'allaitement'],['#0891b2','6–24 mois','Allaitement + alimentation familiale. L\'OMS recommande 2 ans minimum.']].map(([c,a,d],i)=>(
+                <div key={i} style={{ display:'flex', gap:10, marginBottom:i<2?8:0, padding:'9px 10px', background:'#f9fafb', borderRadius:10, borderLeft:`3px solid ${c}` }}>
+                  <div style={{ background:c, color:'white', borderRadius:6, padding:'2px 8px', fontSize:10, fontWeight:700, alignSelf:'flex-start', whiteSpace:'nowrap', flexShrink:0 }}>{a}</div>
+                  <p style={{ color:'#444', fontSize:11, margin:0, lineHeight:1.5 }}>{d}</p>
                 </div>
               ))}
-            </div>
-
-            {/* Allaitement et planification familiale */}
-            <div style={{background:'#fffbeb',borderRadius:14,padding:'14px 16px',border:'1px solid #fde68a'}}>
-              <p style={{fontWeight:700,color:'#92400e',fontSize:13,margin:'0 0 8px'}}>💊 Allaitement et contraception</p>
-              <p style={{color:'#78350f',fontSize:12,margin:'0 0 8px',lineHeight:1.5}}>L'allaitement exclusif protège partiellement contre une nouvelle grossesse (Méthode MAMA) sous conditions strictes :</p>
-              {['Allaitement exclusif au sein (pas de biberon, pas de tétine)','Bébé de moins de 6 mois','Absence de retour de couches (règles)'].map((c,i)=>(
-                <div key={i} style={{display:'flex',gap:8,marginBottom:4}}>
-                  <span style={{color:'#d97706',flexShrink:0}}>→</span>
-                  <span style={{color:'#78350f',fontSize:11,lineHeight:1.5}}>{c}</span>
-                </div>
-              ))}
-              <p style={{color:'#92400e',fontSize:11,margin:'8px 0 0',fontWeight:700}}>⚠️ Si une seule condition n\'est pas remplie → utiliser une contraception. Consulter votre sage-femme.</p>
-            </div>
-
-            {/* Disclaimer final */}
-            <div style={{background:'#f8fafc',borderRadius:14,padding:'14px 16px',border:'1px solid #e2e8f0'}}>
-              <p style={{color:'#475569',fontSize:11,margin:0,lineHeight:1.7,textAlign:'center',fontStyle:'italic'}}>
-                📚 Informations <strong>à titre éducatif uniquement</strong>.<br/>
-                Pour un accompagnement personnalisé à l\'allaitement, consultez votre <strong>sage-femme, médecin ou un conseiller en lactation certifié IBCLC</strong>.
-              </p>
             </div>
           </div>
         )}
 
-        {/* ─── HYGIÈNE & CONSEILS ─── */}
-        {tab==='hygiene' && (
-          <div style={{ animation:'fadeUp .3s ease', display:'flex', flexDirection:'column', gap:10 }}>
+        {/* ── CONSEILS ── */}
+        {tab==='conseils' && (
+          <div style={{ animation:'fadeUp .25s ease', display:'flex', flexDirection:'column', gap:10 }}>
             <div style={{ background:'#fffbeb', borderRadius:14, padding:'12px 14px', border:'1px solid #fde68a' }}>
-              <p style={{ color:'#92400e', fontWeight:700, fontSize:13, margin:'0 0 4px' }}>💡 Conseils essentiels pour une grossesse saine</p>
-              <p style={{ color:'#78350f', fontSize:12, margin:0, lineHeight:1.5 }}>Ces recommandations contribuent à réduire les complications et à assurer la sécurité de la mère et de l\'enfant tout au long de la grossesse.</p>
+              <p style={{ color:'#92400e', fontWeight:700, fontSize:13, margin:'0 0 3px' }}>💡 Conseils pour une grossesse saine</p>
+              <p style={{ color:'#78350f', fontSize:12, margin:0 }}>Des habitudes simples qui protègent la mère et le bébé tout au long de la grossesse.</p>
             </div>
 
-            {HYGIENE.map((h, i) => (
-              <div key={i} style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 2px 8px rgba(0,0,0,0.04)', display:'flex', gap:12 }}>
-                <div style={{ width:40, height:40, borderRadius:12, background:'#fffbeb', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0, border:'1px solid #fde68a' }}>{h.icon}</div>
+            {HYGIENE_ITEMS.map((h,i)=>(
+              <div key={i} style={{ background:'white', borderRadius:14, padding:'12px 14px', display:'flex', gap:12, alignItems:'flex-start', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+                <div style={{ width:38, height:38, borderRadius:11, background:'#fffbeb', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0, border:'1px solid #fde68a' }}>{h.icon}</div>
                 <div>
-                  <div style={{ fontWeight:700, color:'#92400e', fontSize:13, marginBottom:4 }}>{h.title}</div>
-                  <p style={{ color:'#555', fontSize:12, margin:0, lineHeight:1.6 }}>{h.desc}</p>
+                  <p style={{ fontWeight:700, color:'#92400e', fontSize:13, margin:'0 0 3px' }}>{h.t}</p>
+                  <p style={{ color:'#555', fontSize:12, margin:0, lineHeight:1.5 }}>{h.d}</p>
                 </div>
               </div>
             ))}
 
-            {/* Valise de maternité */}
-            <div style={{ background:'linear-gradient(135deg,#fffbeb,#fef3c7)', borderRadius:16, padding:'16px', border:'1.5px solid #fde68a' }}>
-              <p style={{ fontWeight:700, color:'#92400e', fontSize:13, margin:'0 0 10px' }}>👜 Préparer la valise de maternité (dès S34)</p>
-              {[
-                '📄 Carnet de santé, carte nationale d\'identité, carnet de mariage',
-                '🩺 Résultats d\'examens, ordonnances, échographies',
-                '👗 Vêtements amples pour la mère (3 tenues)',
-                '🧴 Articles de toilette, serviettes hygiéniques post-partum',
-                '👶 Vêtements nourrisson (3 sets), couverture, couches',
-                '💊 Médicaments prescrits, suppléments',
-                '📱 Téléphone chargé, numéros d\'urgence notés',
-              ].map((item, i) => (
-                <div key={i} style={{ display:'flex', gap:8, marginBottom:6, fontSize:12, color:'#78350f' }}>
-                  <span>{item}</span>
-                </div>
+            {/* Valise */}
+            <div style={{ background:'linear-gradient(135deg,#fffbeb,#fef3c7)', borderRadius:14, padding:'14px', border:'1.5px solid #fde68a' }}>
+              <p style={{ fontWeight:700, color:'#92400e', fontSize:13, margin:'0 0 10px' }}>👜 Valise de maternité — dès S34</p>
+              {['📄 Carnet de santé, CNI, résultats examens et échographies','👗 3 tenues amples pour la mère','🧴 Articles de toilette, serviettes post-partum','👶 Vêtements nourrisson (3 sets), couches, couverture','💊 Médicaments prescrits et suppléments','📱 Téléphone chargé + numéros d\'urgence notés'].map((item,i)=>(
+                <div key={i} style={{ color:'#78350f', fontSize:12, marginBottom:5 }}>{item}</div>
               ))}
             </div>
 
-            {/* Numéros utiles */}
-            <div style={{ background:'linear-gradient(135deg,#7f1d1d,#dc2626)', borderRadius:16, padding:'16px' }}>
+            {/* Urgences */}
+            <div style={{ background:'linear-gradient(135deg,#7f1d1d,#b91c1c)', borderRadius:14, padding:'14px' }}>
               <p style={{ color:'white', fontWeight:700, fontSize:13, margin:'0 0 10px' }}>🚨 Numéros d'urgence Cameroun</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                {[['119','SAMU / Urgences médicales'],['117','Police Secours'],['118','Sapeurs-Pompiers'],['1510','Info Santé MINSANTÉ']].map(([n,l]) => (
-                  <a key={n} href={`tel:${n}`} style={{ background:'rgba(255,255,255,0.15)', borderRadius:10, padding:'10px 12px', textDecoration:'none', textAlign:'center', border:'1px solid rgba(255,255,255,0.2)' }}>
+                {[['119','SAMU · Urgences médicales'],['117','Police Secours'],['118','Sapeurs-Pompiers'],['1510','Info Santé MINSANTÉ']].map(([n,l])=>(
+                  <a key={n} href={`tel:${n}`} style={{ background:'rgba(255,255,255,0.12)', borderRadius:10, padding:'10px', textDecoration:'none', textAlign:'center' }}>
                     <div style={{ color:'white', fontWeight:800, fontSize:20, fontFamily:'monospace' }}>{n}</div>
-                    <div style={{ color:'rgba(255,255,255,0.75)', fontSize:10, marginTop:2 }}>{l}</div>
+                    <div style={{ color:'rgba(255,255,255,0.7)', fontSize:10, marginTop:2 }}>{l}</div>
                   </a>
                 ))}
               </div>
             </div>
 
-            {/* Disclaimer final */}
-            <div style={{ background:'#f8fafc', borderRadius:14, padding:'14px 16px', border:'1px solid #e2e8f0' }}>
-              <p style={{ color:'#475569', fontSize:12, margin:0, lineHeight:1.7, textAlign:'center', fontStyle:'italic' }}>
-                📚 Toutes les informations de cette rubrique sont fournies <strong>à titre éducatif uniquement</strong>. Elles ne remplacent en aucun cas l'avis d'un professionnel de santé qualifié.<br/><br/>
-                Pour un suivi personnalisé et adapté à votre situation, veuillez consulter votre <strong>sage-femme, médecin ou gynécologue-obstétricien</strong>.
+            <div style={{ background:'#f8fafc', borderRadius:12, padding:'12px 14px', border:'1px solid #e2e8f0' }}>
+              <p style={{ color:'#64748b', fontSize:11, margin:0, textAlign:'center', lineHeight:1.7, fontStyle:'italic' }}>
+                📚 Informations <strong>à titre éducatif uniquement</strong>. Elles ne remplacent pas l'avis d'un professionnel de santé.<br/>
+                Consultez votre <strong>sage-femme, médecin ou gynécologue-obstétricien</strong> pour votre suivi personnalisé.
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── BOTTOM NAV ── */}
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #fde68a', display:'flex', justifyContent:'space-around', padding:'8px 0 10px', boxShadow:'0 -4px 16px rgba(0,0,0,0.06)', zIndex:50 }}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id as any)} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:1, padding:'3px 12px', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#d97706':'#bbb', fontWeight:tab===t.id?700:400 }}>
-            <span style={{ fontSize:19 }}>{t.icon}</span>
-            <span style={{ fontSize:9, lineHeight:1.2, textAlign:'center' }}>{t.label}</span>
+      {/* BOTTOM NAV */}
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #f0ebe3', display:'flex', padding:'8px 0 10px', boxShadow:'0 -2px 12px rgba(0,0,0,0.06)', zIndex:50 }}>
+        {TABS.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id as any)} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:2, padding:'3px 0', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#c2690a':'#c4b5a0', fontWeight:tab===t.id?700:400 }}>
+            <span style={{ fontSize:18 }}>{t.icon}</span>
+            <span style={{ fontSize:9 }}>{t.label}</span>
           </button>
         ))}
       </div>
