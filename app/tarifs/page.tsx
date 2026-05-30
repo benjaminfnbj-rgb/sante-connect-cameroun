@@ -87,8 +87,8 @@ const PLANS = [
   {
     id: 'family',
     name: 'Famille',
-    price_month: 2500,
-    price_year: 25000,
+    price_month: 3000,
+    price_year: 30000,
     color: '#be185d',
     gradient: 'linear-gradient(135deg,#9d174d,#ec4899)',
     bg: '#fdf2f8',
@@ -118,8 +118,8 @@ const PLANS = [
   {
     id: 'pregnancy',
     name: 'Suivi Grossesse',
-    price_month: 3000,
-    price_year: 30000,
+    price_month: 2500,
+    price_year: 25000,
     color: '#0891b2',
     gradient: 'linear-gradient(135deg,#075985,#0891b2)',
     bg: '#e0f2fe',
