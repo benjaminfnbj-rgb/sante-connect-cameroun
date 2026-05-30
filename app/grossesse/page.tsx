@@ -189,7 +189,7 @@ export default function GrossessePage() {
   const trimLabel = { 1:'T1', 2:'T2', 3:'T3' }
 
   return (
-    <div style={{ minHeight:'100vh', background:'linear-gradient(180deg,#fff8f0 0%,#faf7f4 60%)', fontFamily:'system-ui,sans-serif', paddingBottom:80 }}>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(180deg,#fff8f0 0%,#faf7f4 60%)', fontFamily:'system-ui,sans-serif', paddingBottom:80, overflowX:'hidden' }}>
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
@@ -227,14 +227,14 @@ export default function GrossessePage() {
 
 
 
-      <div style={{ maxWidth:560, margin:'0 auto', padding:'16px 14px' }}>
+      <div style={{ maxWidth:560, margin:'0 auto', padding:'16px 16px' }}>
 
         {/* ── CPN ── */}
         {tab==='cpn' && (
           <div style={{ animation:'fadeUp .25s ease', display:'flex', flexDirection:'column', gap:10 }}>
 
             {/* Résumé */}
-            <div style={{ background:'white', borderRadius:20, padding:'18px 18px', boxShadow:'0 4px 20px rgba(0,0,0,0.08)', border:'1.5px solid #f0ebe3' }}>
+            <div style={{ background:'white', borderRadius:20, padding:'18px 16px', boxShadow:'0 4px 20px rgba(0,0,0,0.08)', border:'1.5px solid #f0ebe3', overflow:'hidden' }}>
               <p style={{ fontWeight:700, color:'#92400e', fontSize:14, margin:'0 0 6px' }}>📋 Calendrier officiel — Cameroun</p>
               <p style={{ color:'#555', fontSize:12, margin:'0 0 10px', lineHeight:1.6 }}>
                 Le protocole camerounais prévoit <strong>7 consultations prénatales</strong> mensuelles + <strong>3 échographies</strong> recommandées + <strong>1 consultation post-natale (CPON)</strong> après l'accouchement.
