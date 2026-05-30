@@ -34,7 +34,7 @@ export default function DashboardPage() {
   const isActive = subStatus === 'active' || subStatus === 'trial'
 
   const services = [
-    { icon:'📅', label:'Rendez-vous', href:'/rendez-vous', color:'#0d4a3a', bg:'#e8f5ee', desc:'Prendre un RDV' },
+    { icon:'🩺', label:'Consultation', href:'/rendez-vous', color:'#0d4a3a', bg:'#e8f5ee', desc:'Consulter un médecin' },
     { icon:'💊', label:'Pharmacie', href:'/pharmacie', color:'#1d4ed8', bg:'#eff6ff', desc:'Médicaments' },
     { icon:'🤖', label:'Assistant IA', href:'/assistant', color:'#d97706', bg:'#fffbeb', desc:'Conseils santé' },
     { icon:'🌺', label:'Santé Féminine', href:'/sante-feminine', color:'#be185d', bg:'#fdf2f8', desc:'Cycle menstruel' },
@@ -43,6 +43,7 @@ export default function DashboardPage() {
     { icon:'🎁', label:'Kit Santé', href:'/kit-sante', color:'#059669', bg:'#ecfdf5', desc:'Retraits mensuels' },
     { icon:'🤰', label:'Grossesse', href:'/grossesse', color:'#d97706', bg:'#fffbeb', desc:'Suivi prénatal' },
   { icon:'👤', label:'Mon Profil', href:'/profil', color:'#6b7280', bg:'#f9fafb', desc:'Mes informations' },
+  { icon:'⚙️', label:'Espace Pro', href:'/mon-profil-pro', color:'#0891b2', bg:'#e0f2fe', desc:'Gérer mon profil', proOnly: true },
   ]
 
   const urgences = [

@@ -2,146 +2,170 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
-const SPECIALTIES = ['Toutes', 'Médecin généraliste', 'Pédiatre', 'Gynécologue', 'Cardiologue', 'Dermatologue', 'Chirurgien', 'Ophtalmologue', 'Dentiste', 'Neurologue', 'Psychiatre', 'Kinésithérapeute', 'Radiologue', 'Urgentiste']
-const CITIES = ['Toutes', 'Yaoundé', 'Douala', 'Bafoussam', 'Bamenda', 'Garoua', 'Maroua', 'Bertoua', 'Buea', 'Ebolowa', 'Ngaoundéré']
-const PRO_TYPES = { professional: '👨‍⚕️ Médecin', pharmacy: '💊 Pharmacie', insurance: '🛡️ Assurance', ngo: '🤝 ONG', structure: '🏥 Structure' }
+const TYPE_LABELS: Record<string,{label:string,icon:string,color:string,bg:string}> = {
+  doctor:         { label:'Médecin / Spécialiste', icon:'👨‍⚕️', color:'#0d4a3a', bg:'#e8f5ee' },
+  pharmacy:       { label:'Pharmacie', icon:'💊', color:'#059669', bg:'#d1fae5' },
+  private_clinic: { label:'Clinique Privée', icon:'🏥', color:'#1d4ed8', bg:'#dbeafe' },
+  public_hospital:{ label:'Hôpital Public', icon:'🏛️', color:'#6b7280', bg:'#f3f4f6' },
+  ngo:            { label:'ONG Santé', icon:'🤝', color:'#7c3aed', bg:'#ede9fe' },
+  insurance:      { label:'Assurance', icon:'🛡️', color:'#b45309', bg:'#fef3c7' },
+  lab:            { label:'Laboratoire', icon:'🔬', color:'#0891b2', bg:'#e0f2fe' },
+  un_agency:      { label:'Agence ONU', icon:'🌐', color:'#1d4ed8', bg:'#dbeafe' },
+}
 
 export default function ProfessionnelsPage() {
-  const [pros, setPros] = useState([])
+  const [profiles, setProfiles] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [specialty, setSpecialty] = useState('Toutes')
-  const [city, setCity] = useState('Toutes')
-  const [type, setType] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('tous')
+  const [regionFilter, setRegionFilter] = useState('')
 
   useEffect(() => {
-    supabase
-      .from('professional_profiles')
-      .select('*, profiles(full_name, avatar_url, city, user_type, email)')
-      .eq('verification_status', 'verified')
-      .eq('is_visible', true)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) console.error(error)
-        setPros(data || [])
-        setLoading(false)
-      })
+    const sb = createClient()
+    sb.from('professional_profiles')
+      .select('*')
+      .eq('verification_status','verified')
+      .eq('is_visible',true)
+      .order('structure_name')
+      .then(({data}) => { setProfiles(data||[]); setLoading(false) })
   }, [])
 
-  const filtered = pros.filter(p => {
-    const name = p.structure_name || p.profiles?.full_name || ''
-    const spec = p.specialty || ''
-    const proCity = p.city || p.profiles?.city || ''
-    const q = search.toLowerCase()
-    return (
-      (!search || name.toLowerCase().includes(q) || spec.toLowerCase().includes(q)) &&
-      (specialty === 'Toutes' || spec.toLowerCase().includes(specialty.toLowerCase())) &&
-      (city === 'Toutes' || proCity.toLowerCase().includes(city.toLowerCase())) &&
-      (type === 'all' || p.structure_type === type || p.profiles?.user_type === type)
-    )
+  const types = ['tous',...Array.from(new Set((profiles as any[]).map(p=>p.structure_type))).filter(Boolean)]
+  const regions = ['Toutes',...Array.from(new Set((profiles as any[]).map(p=>p.region))).filter(Boolean).sort()]
+
+  const filtered = profiles.filter((p:any) => {
+    const matchSearch = !search || p.structure_name?.toLowerCase().includes(search.toLowerCase()) || p.specialty?.toLowerCase().includes(search.toLowerCase()) || p.city?.toLowerCase().includes(search.toLowerCase())
+    const matchType = typeFilter==='tous' || p.structure_type===typeFilter
+    const matchRegion = !regionFilter || regionFilter==='Toutes' || p.region===regionFilter
+    return matchSearch && matchType && matchRegion
   })
 
+  if (loading) return (
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div style={{width:32,height:32,borderRadius:'50%',border:'3px solid #e8f5ee',borderTopColor:'#0d4a3a',animation:'spin .8s linear infinite'}}/>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f0' }}>
-      <Navbar />
-      <div style={{ background: 'linear-gradient(135deg,#0d4a3a,#1a7a5e)', padding: '40px 20px 56px', textAlign: 'center' }}>
-        <div style={{ fontSize: 48, marginBottom: 10 }}>👨‍⚕️</div>
-        <h1 style={{ color: 'white', fontSize: 28, fontFamily: 'Georgia,serif', fontWeight: 700, margin: '0 0 8px' }}>
-          Professionnels de Santé
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, margin: 0 }}>
-          Médecins, pharmacies, assurances et ONG vérifiés au Cameroun
-        </p>
+    <div style={{minHeight:'100vh',background:'#f8f9fa',fontFamily:'sans-serif',paddingBottom:30}}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
+      {/* HEADER */}
+      <div style={{background:'linear-gradient(135deg,#0a2e22,#0d4a3a)',padding:'20px 16px 28px',textAlign:'center',position:'relative'}}>
+        <Link href="/dashboard" style={{position:'absolute',top:16,left:16,color:'rgba(255,255,255,0.65)',textDecoration:'none',fontSize:13}}>← Retour</Link>
+        <Link href="/auth/register-pro" style={{position:'absolute',top:12,right:16,background:'rgba(255,255,255,0.15)',borderRadius:10,padding:'6px 12px',color:'white',textDecoration:'none',fontSize:12,fontWeight:700}}>+ Rejoindre</Link>
+        <div style={{fontSize:32,marginBottom:6}}>👨‍⚕️</div>
+        <h1 style={{color:'white',fontSize:20,fontWeight:800,margin:'0 0 4px'}}>Professionnels & Structures</h1>
+        <p style={{color:'rgba(255,255,255,0.65)',fontSize:12,margin:0}}>{profiles.length} professionnel(s) vérifié(s)</p>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '-20px auto 40px', padding: '0 16px' }}>
-        {/* Filtres */}
-        <div style={{ background: 'white', borderRadius: 20, padding: 20, marginBottom: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-          <input placeholder="🔍 Rechercher un médecin, spécialité, structure..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box', marginBottom: 12, outline: 'none' }}
-          />
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <select value={specialty} onChange={e => setSpecialty(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
-              {SPECIALTIES.map(s => <option key={s}>{s}</option>)}
-            </select>
-            <select value={city} onChange={e => setCity(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
-              {CITIES.map(c => <option key={c}>{c}</option>)}
-            </select>
-            <select value={type} onChange={e => setType(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: 'white', cursor: 'pointer' }}>
-              <option value="all">Tous les types</option>
-              {Object.entries(PRO_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
-          </div>
-          <p style={{ color: '#888', fontSize: 12, margin: '10px 0 0', fontFamily: 'sans-serif' }}>
-            {loading ? 'Chargement...' : `${filtered.length} professionnel(s) trouvé(s)`}
-          </p>
+      <div style={{maxWidth:540,margin:'0 auto',padding:'0 14px'}}>
+        {/* Recherche */}
+        <div style={{background:'white',borderRadius:18,padding:'12px 16px',margin:'-14px 0 14px',boxShadow:'0 4px 20px rgba(0,0,0,0.1)',display:'flex',gap:10,alignItems:'center'}}>
+          <span style={{fontSize:16}}>🔍</span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nom, spécialité, ville..."
+            style={{flex:1,border:'none',outline:'none',fontSize:14,fontFamily:'sans-serif'}}/>
+          {search&&<button onClick={()=>setSearch('')} style={{background:'none',border:'none',cursor:'pointer',color:'#aaa',fontSize:16}}>✕</button>}
         </div>
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 60 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '4px solid #0d4a3a', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
-            <p style={{ color: '#888', fontFamily: 'sans-serif' }}>Chargement des professionnels...</p>
+        {/* Filtres type */}
+        <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:4,marginBottom:10}}>
+          {types.map(t=>{
+            const info = TYPE_LABELS[t]
+            return (
+              <button key={t} onClick={()=>setTypeFilter(t)} style={{flexShrink:0,display:'flex',alignItems:'center',gap:5,padding:'7px 13px',borderRadius:50,border:'none',cursor:'pointer',fontWeight:typeFilter===t?700:500,fontSize:12,background:typeFilter===t?'#0d4a3a':'white',color:typeFilter===t?'white':'#555',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+                {t==='tous'?'Tous':info?`${info.icon} ${info.label}`:t}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Filtre région */}
+        {regions.length>2&&(
+          <div style={{marginBottom:14}}>
+            <select value={regionFilter} onChange={e=>setRegionFilter(e.target.value)} style={{width:'100%',padding:'10px 14px',borderRadius:12,border:'1.5px solid #e5e7eb',fontSize:13,outline:'none',background:'white',fontFamily:'sans-serif'}}>
+              {regions.map(r=><option key={r} value={r==='Toutes'?'':r}>{r}</option>)}
+            </select>
           </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 60, background: 'white', borderRadius: 20 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
-            <p style={{ color: '#888', fontFamily: 'sans-serif', marginBottom: 8 }}>Aucun professionnel trouvé</p>
-            <p style={{ color: '#aaa', fontSize: 13, fontFamily: 'sans-serif' }}>
-              Vous êtes professionnel de santé ? <Link href="/auth/register?type=professional" style={{ color: '#0d4a3a', fontWeight: 700 }}>Inscrivez-vous</Link>
-            </p>
+        )}
+
+        {/* Liste */}
+        {filtered.length===0 ? (
+          <div style={{background:'white',borderRadius:18,padding:32,textAlign:'center'}}>
+            <div style={{fontSize:40,marginBottom:10}}>🔍</div>
+            <p style={{color:'#888',fontSize:14}}>{profiles.length===0?'Aucun professionnel vérifié pour le moment.':'Aucun résultat pour cette recherche.'}</p>
+            <Link href="/auth/register-pro" style={{display:'inline-block',marginTop:12,background:'#0d4a3a',color:'white',borderRadius:50,padding:'10px 24px',textDecoration:'none',fontWeight:700,fontSize:13}}>
+              Inscrire ma structure →
+            </Link>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: 14 }}>
-            {filtered.map(p => <ProCard key={p.id} p={p} />)}
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {filtered.map((p:any)=>{
+              const info = TYPE_LABELS[p.structure_type] || {icon:'🏥',color:'#0d4a3a',bg:'#e8f5ee',label:'Structure'}
+              return (
+                <div key={p.id} style={{background:'white',borderRadius:18,overflow:'hidden',boxShadow:'0 2px 12px rgba(0,0,0,0.07)'}}>
+                  {/* Header card */}
+                  <div style={{padding:'14px 16px',display:'flex',gap:12,alignItems:'flex-start'}}>
+                    {/* Photo */}
+                    <div style={{width:56,height:56,borderRadius:16,background:info.bg,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0,border:`2px solid ${info.color}20`}}>
+                      {p.profile_photo_url?<img src={p.profile_photo_url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<span>{info.icon}</span>}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:800,color:'#0d4a3a',fontSize:15,marginBottom:2}}>{p.structure_name}</div>
+                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:4}}>
+                        <span style={{background:info.bg,color:info.color,borderRadius:6,padding:'2px 8px',fontSize:10,fontWeight:700}}>{info.icon} {info.label}</span>
+                        {p.specialty&&<span style={{background:'#f3f4f6',color:'#374151',borderRadius:6,padding:'2px 8px',fontSize:10}}>{p.specialty}</span>}
+                        {p.is_public_sector&&<span style={{background:'#f0fdf4',color:'#16a34a',borderRadius:6,padding:'2px 8px',fontSize:10,fontWeight:700}}>🆓 Public</span>}
+                      </div>
+                      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                        {p.city&&<span style={{color:'#888',fontSize:11}}>📍 {p.city}{p.region?`, ${p.region}`:''}</span>}
+                        {p.opening_hours&&<span style={{color:'#888',fontSize:11}}>🕐 {p.opening_hours}</span>}
+                      </div>
+                    </div>
+                    {/* Notation */}
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,flexShrink:0}}>
+                      <div style={{display:'flex',gap:4}}>
+                        <div style={{background:'#e8f5ee',borderRadius:8,padding:'4px 8px',fontSize:12,color:'#0d4a3a',fontWeight:700}}>👍 {p.likes||0}</div>
+                        <div style={{background:'#fef2f2',borderRadius:8,padding:'4px 8px',fontSize:12,color:'#dc2626',fontWeight:700}}>👎 {p.dislikes||0}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  {p.description&&(
+                    <div style={{padding:'0 16px 10px'}}>
+                      <p style={{color:'#555',fontSize:12,margin:0,lineHeight:1.6}}>{p.description}</p>
+                    </div>
+                  )}
+
+                  {/* Infos contact + actions */}
+                  <div style={{borderTop:'1px solid #f5f5f5',padding:'10px 16px',display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+                    {p.phone&&(
+                      <a href={`tel:${p.phone}`} style={{display:'flex',alignItems:'center',gap:5,background:'#e8f5ee',color:'#0d4a3a',borderRadius:10,padding:'7px 12px',textDecoration:'none',fontWeight:700,fontSize:12}}>
+                        📞 Appeler
+                      </a>
+                    )}
+                    {p.whatsapp&&(
+                      <a href={`https://wa.me/${p.whatsapp?.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center',gap:5,background:'#dcfce7',color:'#15803d',borderRadius:10,padding:'7px 12px',textDecoration:'none',fontWeight:700,fontSize:12}}>
+                        💬 WhatsApp
+                      </a>
+                    )}
+                    {p.accepts_insurance&&(
+                      <span style={{background:'#eff6ff',color:'#1d4ed8',borderRadius:10,padding:'7px 12px',fontSize:12,fontWeight:700}}>🛡️ Assurances</span>
+                    )}
+                    <Link href="/rendez-vous" style={{marginLeft:'auto',background:'#0d4a3a',color:'white',borderRadius:10,padding:'7px 14px',textDecoration:'none',fontWeight:700,fontSize:12}}>
+                      🩺 Consulter →
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
     </div>
   )
 }
-
-function ProCard({ p }) {
-  const name = p.structure_name || p.profiles?.full_name || 'Professionnel'
-  const city = p.city || p.profiles?.city || ''
-  const type = p.profiles?.user_type || 'professional'
-  const typeLabel = PRO_TYPES[type] || '👤 Professionnel'
-
-  return (
-    <Link href={`/professionals/${p.id}`} style={{ textDecoration: 'none' }}>
-      <div style={{ background: 'white', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 14px rgba(0,0,0,0.06)', border: '1px solid #f0f0eb', display: 'flex', gap: 16, alignItems: 'flex-start', cursor: 'pointer' }}>
-        <div style={{ width: 56, height: 56, borderRadius: 16, background: '#e8f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0, overflow: 'hidden' }}>
-          {p.profile_photo ? <img src={p.profile_photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👨‍⚕️'}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-            <span style={{ fontWeight: 700, color: '#0d4a3a', fontSize: 16, fontFamily: 'Georgia,serif' }}>{name}</span>
-            <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>✓ Vérifié</span>
-            {p.is_public_sector && <span style={{ background: '#dbeafe', color: '#1d4ed8', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>🏛️ Public · Gratuit</span>}
-          </div>
-          <div style={{ color: '#2eb87a', fontSize: 13, fontFamily: 'sans-serif', marginBottom: 4 }}>
-            {typeLabel}{p.specialty ? ` · ${p.specialty}` : ''}
-          </div>
-          <div style={{ color: '#888', fontSize: 12, fontFamily: 'sans-serif' }}>
-            📍 {city || 'Cameroun'}
-          </div>
-          {p.description && (
-            <p style={{ color: '#555', fontSize: 13, fontFamily: 'sans-serif', margin: '6px 0 0', lineHeight: 1.5 }}>
-              {p.description.slice(0, 100)}{p.description.length > 100 ? '...' : ''}
-            </p>
-          )}
-        </div>
-        <div style={{ color: '#0d4a3a', fontWeight: 700, fontSize: 12, fontFamily: 'sans-serif', flexShrink: 0, background: '#f0fdf4', borderRadius: 10, padding: '8px 12px' }}>
-          Voir →
-        </div>
-      </div>
-    </Link>
-  )
-}
-
