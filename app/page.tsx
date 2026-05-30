@@ -72,11 +72,28 @@ export default function HomePage() {
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.05, backgroundImage: 'radial-gradient(circle at 20% 50%, #2eb87a 0%, transparent 50%), radial-gradient(circle at 80% 20%, #f5a623 0%, transparent 40%)' }} />
-        {/* Urgences sticky */}
-        <div style={{ position: 'absolute', top: 88, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-          <div style={{ background: 'rgba(220,38,38,0.9)', backdropFilter: 'blur(20px)', borderRadius: 50, padding: '6px 16px', display: 'flex', gap: 12 }}>
-            {[['117','Police'],['118','Pompiers'],['119','SAMU'],['113','Gendarmerie'],['112','Universel'],['1510','Info Santé']].map(([n, l]) => (
-              <a key={n} href={`tel:${n}`} style={{ color: 'white', fontFamily: 'sans-serif', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>{n} {l}</a>
+        {/* Urgences — ticker défilant */}
+        <div style={{ position: 'absolute', top: 60, left: 0, right: 0, background: 'rgba(185,28,28,0.92)', backdropFilter: 'blur(10px)', overflow: 'hidden', zIndex: 10, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <style>{`
+            @keyframes ticker {
+              0%   { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .ticker-inner { display: flex; animation: ticker 18s linear infinite; width: max-content; }
+            .ticker-inner:hover { animation-play-state: paused; }
+          `}</style>
+          <div className="ticker-inner" style={{ padding: '7px 0' }}>
+            {/* Répété 2 fois pour boucle infinie */}
+            {[...Array(2)].map((_, rep) => (
+              <div key={rep} style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'sans-serif', padding: '0 16px', fontWeight: 700 }}>🚨 URGENCES CAMEROUN</span>
+                {[['117','Police'],['118','Pompiers'],['119','SAMU'],['113','Gendarmerie'],['112','Universel'],['1510','Info Santé']].map(([n, l]) => (
+                  <a key={n+rep} href={`tel:${n}`} style={{ color: 'white', fontFamily: 'sans-serif', fontSize: 12, fontWeight: 800, textDecoration: 'none', padding: '0 18px', display: 'flex', alignItems: 'center', gap: 5, borderRight: '1px solid rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 16, fontFamily: 'monospace' }}>{n}</span>
+                    <span style={{ opacity: 0.8, fontWeight: 500 }}>{l}</span>
+                  </a>
+                ))}
+              </div>
             ))}
           </div>
         </div>
