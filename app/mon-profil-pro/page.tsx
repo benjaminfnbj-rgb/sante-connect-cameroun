@@ -40,6 +40,8 @@ export default function MonProfilProPage() {
   const [insurance, setInsurance] = useState(false)
   const [photoFile, setPhotoFile] = useState<File|null>(null)
   const [photoPreview, setPhotoPreview] = useState('')
+  const [isOnDuty, setIsOnDuty] = useState(false)
+  const [dutyLoading, setDutyLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   // Produit form
@@ -79,6 +81,7 @@ export default function MonProfilProPage() {
         setHours(pp.opening_hours||'')
         setInsurance(pp.accepts_insurance||false)
         if (pp.profile_photo_url) setPhotoPreview(pp.profile_photo_url)
+        setIsOnDuty(pp.is_on_duty || false)
       }
       setProducts(prods||[])
       setLoading(false)
@@ -90,6 +93,19 @@ export default function MonProfilProPage() {
     if (!file) return
     setPhotoFile(file)
     setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  const toggleDuty = async () => {
+    if (!proProfile?.id) return
+    setDutyLoading(true)
+    const sb = createClient()
+    const newStatus = !isOnDuty
+    await sb.from('professional_profiles').update({
+      is_on_duty: newStatus,
+      duty_until: newStatus ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null
+    }).eq('id', proProfile.id)
+    setIsOnDuty(newStatus)
+    setDutyLoading(false)
   }
 
   const saveProfil = async () => {
@@ -194,6 +210,28 @@ export default function MonProfilProPage() {
         {tab==='profil' && (
           <div style={{animation:'fadeUp .25s ease',display:'flex',flexDirection:'column',gap:12}}>
             {saved && <div style={{background:'#e8f5ee',borderRadius:12,padding:'10px 14px',color:'#0d4a3a',fontWeight:700,fontSize:13,textAlign:'center'}}>✅ Profil mis à jour avec succès !</div>}
+
+            {/* Statut de garde */}
+            {isPharmacy && (
+              <div style={{background:isOnDuty?'#fef2f2':'#f0fdf4',borderRadius:16,padding:'14px 16px',border:`1.5px solid ${isOnDuty?'#fecaca':'#86efac'}`}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <div>
+                    <div style={{fontWeight:700,color:isOnDuty?'#dc2626':'#0d4a3a',fontSize:14}}>
+                      {isOnDuty?'🏥 Pharmacie de garde — Active':'🏥 Statut de garde'}
+                    </div>
+                    <div style={{color:'#888',fontSize:11,marginTop:2}}>
+                      {isOnDuty?'Visible en rouge sur la carte · Patients informés':'Activez pour signaler que vous êtes de garde'}
+                    </div>
+                  </div>
+                  <div style={{width:50,height:26,borderRadius:50,background:isOnDuty?'#dc2626':'#d1d5db',position:'relative',cursor:'pointer',transition:'background .2s',flexShrink:0}} onClick={toggleDuty}>
+                    <div style={{position:'absolute',top:3,left:isOnDuty?26:3,width:20,height:20,borderRadius:'50%',background:'white',transition:'left .2s',boxShadow:'0 1px 4px rgba(0,0,0,0.2)'}}/>
+                  </div>
+                </div>
+                <button onClick={toggleDuty} disabled={dutyLoading} style={{width:'100%',padding:'11px',borderRadius:50,border:'none',background:isOnDuty?'#dc2626':'#0d4a3a',color:'white',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                  {dutyLoading?'⏳ Mise à jour...':isOnDuty?'🔴 Je suis de garde (cliquer pour désactiver)':'🟢 Activer le statut de garde'}
+                </button>
+              </div>
+            )}
 
             {/* Photo de profil */}
             <div style={{background:'white',borderRadius:18,padding:'18px',boxShadow:'0 2px 10px rgba(0,0,0,0.06)',textAlign:'center'}}>
