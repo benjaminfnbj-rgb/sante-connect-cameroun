@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Feminine() {
   const [cycles, setCycles] = useState<{id:string, cycle_start:string, cycle_end:string, cycle_length:number, symptoms:string[], notes:string}[]>([])
@@ -14,12 +14,12 @@ export default function Feminine() {
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await createClient().auth.getSession()
     if (!session) { window.location.href = '/auth/login'; return }
-    const { data: u } = await supabase.from('users').select('id').eq('auth_id', session.user.id).single()
+    const { data: u } = await createClient().from('users').select('id').eq('auth_id', session.user.id).single()
     if (u) {
       setUserId(u.id)
-      const { data } = await supabase.from('menstrual_cycles').select('*').eq('user_id', u.id).order('cycle_start', {ascending:false}).limit(6)
+      const { data } = await createClient().from('menstrual_cycles').select('*').eq('user_id', u.id).order('cycle_start', {ascending:false}).limit(6)
       if (data) setCycles(data)
     }
   }
@@ -34,7 +34,7 @@ export default function Feminine() {
     const start = new Date(form.cycle_start)
     const end = form.cycle_end ? new Date(form.cycle_end) : null
     const length = end ? Math.round((end.getTime() - start.getTime()) / (1000*60*60*24)) : null
-    await supabase.from('menstrual_cycles').insert({
+    await createClient().from('menstrual_cycles').insert({
       user_id: userId, cycle_start: form.cycle_start,
       cycle_end: form.cycle_end || null, cycle_length: length,
       symptoms: form.symptoms, notes: form.notes

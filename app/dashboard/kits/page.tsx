@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Kits() {
   const [receipts, setReceipts] = useState<Record<string, unknown>[]>([])
@@ -11,13 +11,13 @@ export default function Kits() {
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await createClient().auth.getSession()
     if (!session) return
-    const { data: u } = await supabase.from('users').select('*').eq('auth_id', session.user.id).single()
+    const { data: u } = await createClient().from('users').select('*').eq('auth_id', session.user.id).single()
     if (u) {
       setUser(u)
       const now = new Date()
-      const { data } = await supabase.from('health_kit_receipts').select('*').eq('user_id', u.id).order('created_at', {ascending:false})
+      const { data } = await createClient().from('health_kit_receipts').select('*').eq('user_id', u.id).order('created_at', {ascending:false})
       if (data) setReceipts(data)
     }
   }
@@ -36,7 +36,7 @@ export default function Kits() {
     }
 
     if (kitType !== 'none') {
-      await supabase.from('health_kit_receipts').insert({
+      await createClient().from('health_kit_receipts').insert({
         user_id: user.id, kit_type: kitType,
         period_month: now.getMonth() + 1, period_year: now.getFullYear()
       })

@@ -4,6 +4,20 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+
+const DEMO_PRODUCTS = [
+  { id:'p1', name:'Paracétamol 500mg', generic_name:'Paracétamol', category:'Analgésiques', description:'Antidouleur et antipyrétique. Boîte de 20 comprimés.', price_fcfa:500, unit:'boîte', requires_prescription:false, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p2', name:'Coartem (Artéméther-Luméfantrine)', generic_name:'Artéméther-Luméfantrine', category:'Antipaludéens', description:'Traitement du paludisme non compliqué. Adulte 6 comprimés.', price_fcfa:3500, unit:'boîte', requires_prescription:true, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p3', name:'Amoxicilline 500mg', generic_name:'Amoxicilline', category:'Antibiotiques', description:'Antibiotique à large spectre. Boîte de 21 gélules.', price_fcfa:2200, unit:'boîte', requires_prescription:true, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p4', name:'Acide Folique 5mg', generic_name:'Acide Folique', category:'Maternité', description:'Supplémentation grossesse — prévention spina bifida.', price_fcfa:800, unit:'boîte', requires_prescription:false, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p5', name:'Fer + Acide Folique', generic_name:'Sulfate Ferreux', category:'Maternité', description:'Traitement anémie gestationnelle. Boîte de 30 comprimés.', price_fcfa:1200, unit:'boîte', requires_prescription:false, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p6', name:'Ibuprofène 400mg', generic_name:'Ibuprofène', category:'Analgésiques', description:'Anti-inflammatoire et antidouleur. Boîte de 20 comprimés.', price_fcfa:700, unit:'boîte', requires_prescription:false, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p7', name:'Vitamine C 500mg', generic_name:'Acide Ascorbique', category:'Vitamines & Compléments', description:'Renforcement immunitaire. Boîte de 30 comprimés effervescents.', price_fcfa:900, unit:'boîte', requires_prescription:false, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p8', name:'Mébendazole 500mg', generic_name:'Mébendazole', category:'Antiparasitaires', description:'Déparasitage intestinal. Dose unique adulte.', price_fcfa:450, unit:'comprimé', requires_prescription:false, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p9', name:'SRO — Réhydratation Orale', generic_name:'Sels de Réhydratation', category:'Soins courants', description:'Traitement déshydratation. Sachet de 10.', price_fcfa:600, unit:'sachet', requires_prescription:false, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+  { id:'p10', name:'Metformine 500mg', generic_name:'Metformine', category:'Diabète', description:'Traitement du diabète de type 2. Boîte de 30 comprimés.', price_fcfa:1800, unit:'boîte', requires_prescription:true, profiles:{full_name:'Pharmacie Centrale Yaoundé'} },
+]
+
 export default function PharmaciePage() {
   const [products, setProducts] = useState([])
   const [pharmacies, setPharmacies] = useState([])
@@ -20,7 +34,7 @@ export default function PharmaciePage() {
       sb.from('professional_profiles').select('*').eq('structure_type','pharmacy').eq('verification_status','verified'),
       sb.auth.getSession().then(({data:{session}}) => session?.user?.id ? sb.from('profiles').select('user_type').eq('id',session.user.id).single() : {data:null})
     ]).then(([{data:prods},{data:pharms},profileRes]) => {
-      setProducts(prods||[])
+      setProducts(prods && prods.length > 0 ? prods : DEMO_PRODUCTS)
       setPharmacies(pharms||[])
       setUserType(profileRes?.data?.user_type||'')
       setLoading(false)
@@ -36,7 +50,7 @@ export default function PharmaciePage() {
 
   const addCart = (id:string) => setCart(c=>({...c,[id]:(c[id]||0)+1}))
   const remCart = (id:string) => setCart(c=>{ const n={...c}; if(n[id]>1) n[id]--; else delete n[id]; return n })
-  const total = Object.entries(cart).reduce((s,[id,qty])=>{ const p=products.find((x:any)=>x.id===id) as any; return s+(p?.price_fcfa||0)*qty },0)
+  const total = Object.entries(cart).reduce((s,[id,qty])=>{ const p=products.find((x:any)=>x.id===id) as any; return s+(p?.price_fcfa || p?.price||0)*qty },0)
   const cartCount = Object.values(cart).reduce((s,v)=>s+v,0)
 
   if (loading) return (
@@ -126,7 +140,7 @@ export default function PharmaciePage() {
                   {p.profiles?.full_name&&<p style={{color:'#aaa',fontSize:10,margin:'4px 0 0'}}>📍 {p.profiles.full_name}</p>}
                 </div>
                 <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:6,flexShrink:0}}>
-                  <div style={{fontWeight:800,color:'#0d4a3a',fontSize:15}}>{p.price_fcfa?.toLocaleString()} F</div>
+                  <div style={{fontWeight:800,color:'#0d4a3a',fontSize:15}}>{p.price_fcfa || p.price?.toLocaleString()} F</div>
                   <div style={{color:'#aaa',fontSize:10}}>/{p.unit}</div>
                   {cart[p.id] ? (
                     <div style={{display:'flex',alignItems:'center',gap:6}}>

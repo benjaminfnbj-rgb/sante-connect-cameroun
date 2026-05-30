@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export default function ProfilPage() {
@@ -17,10 +17,10 @@ export default function ProfilPage() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
+    createClient().auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
       if (!user) { router.push('/connexion'); return }
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      const { data: s } = await supabase.from('subscriptions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single()
+      const { data: p } = await createClient().from('profiles').select('*').eq('id', user.id).single()
+      const { data: s } = await createClient().from('subscriptions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single()
       if (p) { setProfile(p); setForm({ full_name: p.full_name, phone: p.phone || '', city: p.city || '', gender: p.gender || '' }) }
       if (s) setSubscription(s)
       setLoading(false)
@@ -29,7 +29,7 @@ export default function ProfilPage() {
 
   async function save() {
     setSaving(true)
-    const { error } = await supabase.from('profiles').update({
+    const { error } = await createClient().from('profiles').update({
       full_name: form.full_name, phone: form.phone || null, city: form.city || null, gender: form.gender || null
     }).eq('id', profile.id)
     if (!error) { setProfile({ ...profile, ...form }); setEditing(false); setMsg('✅ Profil mis à jour !') }
@@ -38,7 +38,7 @@ export default function ProfilPage() {
   }
 
   async function logout() {
-    await supabase.auth.signOut()
+    await createClient().auth.signOut()
     router.push('/')
   }
 

@@ -148,7 +148,7 @@ export default function InscriptionPage() {
               Continuer avec {selectedRole.label} →
             </button>
             <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#888', fontFamily: 'sans-serif' }}>
-              Déjà un compte ? <Link href="/connexion" style={{ color: '#0d4a3a', fontWeight: 700 }}>Se connecter</Link>
+              En créant un compte, vous acceptez nos <a href='/cgu' style={{color:'#0d4a3a',fontWeight:600}}>CGU</a> et notre <a href='/mentions-legales' style={{color:'#0d4a3a',fontWeight:600}}>Politique de confidentialité</a>.<br/><br/>Déjà un compte ? <Link href="/connexion" style={{ color: '#0d4a3a', fontWeight: 700 }}>Se connecter</Link>
             </p>
           </div>
         )}

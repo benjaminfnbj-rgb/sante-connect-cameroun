@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Appointments() {
   const [appointments, setAppointments] = useState<Record<string, unknown>[]>([])
@@ -10,11 +10,11 @@ export default function Appointments() {
   useEffect(() => { loadAppointments() }, [])
 
   async function loadAppointments() {
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await createClient().auth.getSession()
     if (!session) { window.location.href = '/auth/login'; return }
-    const { data: u } = await supabase.from('users').select('id').eq('auth_id', session.user.id).single()
+    const { data: u } = await createClient().from('users').select('id').eq('auth_id', session.user.id).single()
     if (!u) return
-    const { data } = await supabase.from('appointments')
+    const { data } = await createClient().from('appointments')
       .select('*, professionals(full_name, pro_type, city)')
       .eq('patient_id', u.id).order('appointment_date', {ascending: false})
     if (data) setAppointments(data)
@@ -22,7 +22,7 @@ export default function Appointments() {
   }
 
   async function cancelAppointment(id: string) {
-    await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id)
+    await createClient().from('appointments').update({ status: 'cancelled' }).eq('id', id)
     loadAppointments()
   }
 

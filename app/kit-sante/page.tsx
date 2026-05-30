@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export default function KitSantePage() {
@@ -15,12 +15,12 @@ export default function KitSantePage() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
+    createClient().auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
       if (!user) { router.push('/connexion'); return }
       const [{ data: p }, { data: s }, { data: w }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('subscriptions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single(),
-        supabase.from('kit_withdrawals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5)
+        createClient().from('profiles').select('*').eq('id', user.id).single(),
+        createClient().from('subscriptions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single(),
+        createClient().from('kit_withdrawals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5)
       ])
       setProfile(p); setSub(s); setWithdrawals(w || [])
       setLoading(false)
@@ -32,7 +32,7 @@ export default function KitSantePage() {
     const code = 'SCK-' + Math.random().toString(36).substring(2, 8).toUpperCase()
     const month = new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
     const kitType = sub?.include_condoms !== false ? 'condoms_pads' : 'pads'
-    await supabase.from('kit_withdrawals').insert({
+    await createClient().from('kit_withdrawals').insert({
       user_id: profile.id,
       subscription_id: sub?.id,
       kit_type: kitType,

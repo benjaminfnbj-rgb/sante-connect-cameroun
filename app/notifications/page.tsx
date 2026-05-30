@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export default function NotificationsPage() {
@@ -11,13 +11,13 @@ export default function NotificationsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
+    createClient().auth.getSession().then(async ({ data: { session } }) => { const user = session?.user;
       if (!user) { router.push('/connexion'); return }
-      const { data } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30)
+      const { data } = await createClient().from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30)
       setNotifs(data || [])
       setLoading(false)
       // Mark all as read
-      await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false)
+      await createClient().from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false)
     })
   }, [router])
 

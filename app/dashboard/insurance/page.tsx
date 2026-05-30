@@ -1,13 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Insurance() {
   const [offers, setOffers] = useState<Record<string, unknown>[]>([])
 
   useEffect(() => {
-    supabase.from('insurance_offers').select('*, professionals(full_name)').eq('is_active', true).then(({data}) => { if (data) setOffers(data) })
+    createClient().from('insurance_offers').select('*, professionals(full_name)').eq('is_active', true).then(({data}) => { if (data) setOffers(data) })
   }, [])
 
   const typeLabels: Record<string, string> = { health:'Santé', illness:'Maladie', life:'Vie', combined:'Combinée' }

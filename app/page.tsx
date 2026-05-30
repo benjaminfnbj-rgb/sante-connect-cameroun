@@ -242,6 +242,16 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+    
+      {/* Footer légal */}
+      <div style={{ background:'#0a2e22', padding:'20px 16px', textAlign:'center' }}>
+        <p style={{ color:'rgba(255,255,255,0.3)', fontSize:11, margin:'0 0 8px' }}>© 2026 Santé Connect Cameroun</p>
+        <div style={{ display:'flex', justifyContent:'center', gap:16 }}>
+          <a href="/mentions-legales" style={{ color:'rgba(255,255,255,0.4)', fontSize:11, textDecoration:'none' }}>Mentions légales</a>
+          <a href="/cgu" style={{ color:'rgba(255,255,255,0.4)', fontSize:11, textDecoration:'none' }}>CGU</a>
+          <a href="/tarifs" style={{ color:'rgba(255,255,255,0.4)', fontSize:11, textDecoration:'none' }}>Tarifs</a>
+        </div>
+      </div>
     </div>
   )
 }

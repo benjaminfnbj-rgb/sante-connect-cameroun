@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 const STATUS = {
   pending:   { label: 'En attente', color: '#d97706', bg: '#fffbeb' },
@@ -18,7 +18,7 @@ export default function RendezVousPage() {
   const [userId, setUserId] = useState(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
       if (!user) { window.location.href = '/connexion'; return }
       setUserId(user.id)
       loadAppointments(user.id)
@@ -26,7 +26,7 @@ export default function RendezVousPage() {
   }, [])
 
   async function loadAppointments(uid) {
-    const { data } = await supabase.from('appointments')
+    const { data } = await createClient().from('appointments')
       .select('*, professional_profiles(structure_name, specialty, city)')
       .eq('patient_id', uid)
       .order('appointment_date', { ascending: false })
@@ -35,7 +35,7 @@ export default function RendezVousPage() {
   }
 
   async function cancel(id) {
-    await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id)
+    await createClient().from('appointments').update({ status: 'cancelled' }).eq('id', id)
     if (userId) loadAppointments(userId)
   }
 

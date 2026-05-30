@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 // ─── Pyramide sanitaire du Cameroun ─────────────────────────────────────────
 const PYRAMID = [
@@ -84,7 +84,7 @@ export default function StructuresPage() {
   const [view, setView] = useState('pyramid') // 'pyramid' | 'list'
 
   useEffect(() => {
-    supabase.from('professional_profiles')
+    createClient().from('professional_profiles')
       .select('*')
       .eq('verification_status', 'verified')
       .eq('is_visible', true)

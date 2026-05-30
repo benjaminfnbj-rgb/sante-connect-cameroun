@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -36,13 +36,13 @@ export default function PatientDashboard() {
   const [pharmacySearch, setPharmacySearch] = useState('')
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    createClient().auth.getUser().then(({ data }) => {
       if (!data.user) { router.push('/auth/login'); return }
-      supabase.from('profiles').select('*').eq('id', data.user.id).single()
+      createClient().from('profiles').select('*').eq('id', data.user.id).single()
         .then(({ data: p }) => setProfile(p))
     })
     // Load doctors
-    supabase.from('professional_profiles').select('*, profiles(full_name, avatar_url)').eq('is_verified', true).limit(6)
+    createClient().from('professional_profiles').select('*, profiles(full_name, avatar_url)').eq('is_verified', true).limit(6)
       .then(({ data }) => setDoctors(data || []))
   }, [])
 
@@ -75,7 +75,7 @@ export default function PatientDashboard() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await createClient().auth.signOut()
     router.push('/')
   }
 

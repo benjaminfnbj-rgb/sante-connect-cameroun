@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,10 +16,10 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await createClient().auth.signInWithPassword({ email, password })
       if (error) throw error
       // Get profile to redirect appropriately
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
+      const { data: profile } = await createClient().from('profiles').select('role').eq('id', data.user.id).single()
       if (profile?.role === 'professional' || profile?.role === 'pharmacy') {
         router.push('/dashboard/professional')
       } else {

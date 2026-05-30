@@ -4,6 +4,16 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+
+const DEMO_PROFILES = [
+  { id:'d1', structure_type:'doctor', structure_name:'Dr. Paul Kamga', specialty:'Médecine Générale & Pédiatrie', description:'Médecin généraliste avec 15 ans d\'expérience. Spécialisé en pédiatrie et médecine préventive. Consultations sur rendez-vous.', region:'Centre', city:'Yaoundé', phone:'+237 677 111 111', whatsapp:'+237 677 111 111', verification_status:'verified', is_visible:true, likes:47, dislikes:2, opening_hours:'Lun–Ven 8h–18h · Sam 9h–14h', profile_photo_url:null, accepts_insurance:true, is_public_sector:false },
+  { id:'d2', structure_type:'doctor', structure_name:'Dr. Marie Ngono', specialty:'Gynécologie-Obstétrique', description:'Gynécologue-obstétricienne spécialisée en suivi de grossesse, fertilité et santé féminine. 12 ans d\'expérience.', region:'Littoral', city:'Douala', phone:'+237 677 222 222', whatsapp:'+237 677 222 222', verification_status:'verified', is_visible:true, likes:89, dislikes:1, opening_hours:'Lun–Sam 7h30–17h', profile_photo_url:null, accepts_insurance:true, is_public_sector:false },
+  { id:'d3', structure_type:'pharmacy', structure_name:'Pharmacie Centrale Yaoundé', specialty:null, description:'Pharmacie complète avec stock permanent de médicaments essentiels. Service de livraison à domicile disponible.', region:'Centre', city:'Yaoundé', phone:'+237 677 333 333', whatsapp:'+237 677 333 333', verification_status:'verified', is_visible:true, likes:134, dislikes:3, opening_hours:'Lun–Dim 7h–22h', profile_photo_url:null, accepts_insurance:false, is_public_sector:false },
+  { id:'d4', structure_type:'private_clinic', structure_name:'Clinique Espoir', specialty:null, description:'Clinique pluridisciplinaire : médecine générale, chirurgie, maternité, pédiatrie. Plateau technique moderne avec imagerie médicale.', region:'Littoral', city:'Douala', phone:'+237 677 444 444', whatsapp:'+237 677 444 444', verification_status:'verified', is_visible:true, likes:203, dislikes:8, opening_hours:'Ouvert 24h/24 · 7j/7', profile_photo_url:null, accepts_insurance:true, is_public_sector:false },
+  { id:'d5', structure_type:'lab', structure_name:'Laboratoire Central d\'Analyses', specialty:null, description:'Analyses biologiques complètes : hématologie, biochimie, bactériologie, sérologies. Résultats en 24h.', region:'Centre', city:'Yaoundé', phone:'+237 677 555 555', whatsapp:null, verification_status:'verified', is_visible:true, likes:61, dislikes:2, opening_hours:'Lun–Sam 7h–17h', profile_photo_url:null, accepts_insurance:true, is_public_sector:false },
+  { id:'d6', structure_type:'ngo', structure_name:'Association Santé Pour Tous', specialty:null, description:'ONG camerounaise dédiée à la santé communautaire, prévention VIH/SIDA et sensibilisation sur la santé maternelle dans les zones rurales.', region:'Ouest', city:'Bafoussam', phone:'+237 677 666 666', whatsapp:'+237 677 666 666', verification_status:'verified', is_visible:true, likes:88, dislikes:0, opening_hours:'Lun–Ven 8h–17h', profile_photo_url:null, accepts_insurance:false, is_public_sector:false },
+]
+
 const TYPE_LABELS: Record<string,{label:string,icon:string,color:string,bg:string}> = {
   doctor:         { label:'Médecin / Spécialiste', icon:'👨‍⚕️', color:'#0d4a3a', bg:'#e8f5ee' },
   pharmacy:       { label:'Pharmacie', icon:'💊', color:'#059669', bg:'#d1fae5' },
@@ -29,7 +39,13 @@ export default function ProfessionnelsPage() {
       .eq('verification_status','verified')
       .eq('is_visible',true)
       .order('structure_name')
-      .then(({data}) => { setProfiles(data||[]); setLoading(false) })
+      .then(({data}) => {
+        const real = data || []
+        // Show demo profiles if DB empty (for presentation)
+        const demo = real.length === 0 ? DEMO_PROFILES : real
+        setProfiles(demo)
+        setLoading(false)
+      })
   }, [])
 
   const types = ['tous',...Array.from(new Set((profiles as any[]).map(p=>p.structure_type))).filter(Boolean)]
