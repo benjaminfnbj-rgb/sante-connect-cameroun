@@ -189,46 +189,49 @@ export default function GrossessePage() {
   const trimLabel = { 1:'T1', 2:'T2', 3:'T3' }
 
   return (
-    <div style={{ minHeight:'100vh', background:'#faf7f4', fontFamily:'system-ui,sans-serif', paddingBottom:72 }}>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(180deg,#fff8f0 0%,#faf7f4 60%)', fontFamily:'system-ui,sans-serif', paddingBottom:80 }}>
       <style>{`
-        @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-        .cpn-row:active { opacity:.75 }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        .cpn-row:active { opacity:.75; transform:scale(0.99) }
+        .tab-active { background: #fff3e0 !important; }
+        .card { transition: box-shadow .2s; }
+        .card:active { transform: scale(0.99); }
       `}</style>
 
       {/* HEADER */}
-      <div style={{ background:'linear-gradient(135deg,#78350f,#c2690a)', padding:'14px 16px 16px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:12, maxWidth:560, margin:'0 auto' }}>
-          <Link href="/dashboard" style={{ color:'rgba(255,255,255,0.65)', textDecoration:'none', fontSize:13 }}>← Retour</Link>
+      <div style={{ background:'linear-gradient(160deg,#7c3003,#c2690a,#d97706)', padding:'18px 16px 22px', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:-30, right:-30, width:140, height:140, borderRadius:'50%', background:'rgba(255,255,255,0.05)' }}/>
+        <div style={{ position:'absolute', bottom:-20, left:-20, width:100, height:100, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }}/>
+        <div style={{ display:'flex', alignItems:'center', gap:12, maxWidth:560, margin:'0 auto', position:'relative', zIndex:1 }}>
+          <Link href="/dashboard" style={{ background:'rgba(255,255,255,0.15)', borderRadius:10, padding:'7px 10px', color:'white', textDecoration:'none', fontSize:12, fontWeight:600, flexShrink:0 }}>← Retour</Link>
           <div style={{ flex:1, textAlign:'center' }}>
-            <div style={{ color:'white', fontSize:17, fontWeight:700 }}>🤰 Suivi de Grossesse</div>
-            <div style={{ color:'rgba(255,255,255,0.65)', fontSize:11, marginTop:1 }}>Guide éducatif santé maternelle & fœtale</div>
+            <div style={{ color:'white', fontSize:17, fontWeight:800 }}>🤰 Suivi de Grossesse</div>
+            <div style={{ color:'rgba(255,255,255,0.6)', fontSize:11, marginTop:2 }}>Guide éducatif · Santé maternelle & fœtale</div>
           </div>
-          <div style={{ width:44 }}/>
+          <div style={{ background:'rgba(255,255,255,0.15)', borderRadius:10, padding:'5px 8px', textAlign:'center' }}>
+            <div style={{ color:'white', fontSize:9, fontWeight:700 }}>⚕️ Éducatif</div>
+          </div>
         </div>
       </div>
 
-      {/* DISCLAIMER */}
-      <div style={{ background:'#fffbeb', borderBottom:'1px solid #fde68a', padding:'8px 16px', textAlign:'center' }}>
-        <p style={{ color:'#92400e', fontSize:11, margin:0 }}>
-          ⚕️ <strong>Informations éducatives uniquement.</strong> Consultez un(e) sage-femme, médecin ou gynécologue pour votre suivi.
-        </p>
-      </div>
 
 
 
-      <div style={{ maxWidth:560, margin:'0 auto', padding:'14px 14px' }}>
+
+      <div style={{ maxWidth:560, margin:'0 auto', padding:'16px 14px' }}>
 
         {/* ── CPN ── */}
         {tab==='cpn' && (
           <div style={{ animation:'fadeUp .25s ease', display:'flex', flexDirection:'column', gap:10 }}>
 
             {/* Résumé */}
-            <div style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 1px 8px rgba(0,0,0,0.06)' }}>
+            <div style={{ background:'white', borderRadius:20, padding:'18px 18px', boxShadow:'0 4px 20px rgba(0,0,0,0.08)', border:'1.5px solid #f0ebe3' }}>
               <p style={{ fontWeight:700, color:'#92400e', fontSize:14, margin:'0 0 6px' }}>📋 Calendrier officiel — Cameroun</p>
               <p style={{ color:'#555', fontSize:12, margin:'0 0 10px', lineHeight:1.6 }}>
                 Le protocole camerounais prévoit <strong>7 consultations prénatales</strong> mensuelles + <strong>3 échographies</strong> recommandées + <strong>1 consultation post-natale (CPON)</strong> après l'accouchement.
               </p>
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:8 }}>
                 {[['T1','#e8f5ee','#0d4a3a','CPN 1'],['T2','#eff6ff','#1d4ed8','CPN 2–4'],['T3','#f5f3ff','#7c3aed','CPN 5–7'],['Post','#fef2f2','#dc2626','CPON']].map(([l,bg,c,sub])=>(
                   <div key={l} style={{ background:bg, borderRadius:10, padding:'7px 12px', flex:1, minWidth:72, textAlign:'center' }}>
                     <div style={{ color:c, fontWeight:800, fontSize:14 }}>{l}</div>
@@ -258,10 +261,10 @@ export default function GrossessePage() {
 
             {/* CPN accordéon */}
             {CPN_DATA.map((cpn, idx) => (
-              <div key={idx} style={{ background:'white', borderRadius:16, overflow:'hidden', boxShadow:'0 1px 8px rgba(0,0,0,0.05)', border:`1px solid ${cpn.border}` }}>
-                <button className="cpn-row" onClick={() => setOpenCPN(openCPN===idx?null:idx)} style={{ width:'100%', padding:'13px 16px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
-                  <div style={{ width:40, height:40, borderRadius:12, background:cpn.bg, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flexShrink:0, border:`1px solid ${cpn.border}` }}>
-                    <span style={{ color:cpn.color, fontWeight:800, fontSize:13, lineHeight:1 }}>{cpn.id.split(' ')[1]}</span>
+              <div key={idx} style={{ background:'white', borderRadius:18, overflow:'hidden', boxShadow:'0 3px 16px rgba(0,0,0,0.07)', border:`1.5px solid ${cpn.border}` }}>
+                <button className="cpn-row" onClick={() => setOpenCPN(openCPN===idx?null:idx)} style={{ width:'100%', padding:'14px 16px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
+                  <div style={{ width:44, height:44, borderRadius:13, background:`linear-gradient(135deg,${cpn.color}22,${cpn.color}10)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flexShrink:0, border:`2px solid ${cpn.color}30` }}>
+                    <span style={{ color:cpn.color, fontWeight:900, fontSize:16, lineHeight:1 }}>{cpn.id.split(' ')[1]}</span>
                     <span style={{ color:cpn.color, fontSize:8, opacity:.7 }}>{trimLabel[cpn.trim]}</span>
                   </div>
                   <div style={{ flex:1 }}>
@@ -298,7 +301,7 @@ export default function GrossessePage() {
 
             {/* CPON */}
             <div style={{ background:'white', borderRadius:16, overflow:'hidden', boxShadow:'0 1px 8px rgba(0,0,0,0.05)', border:'1px solid #fecaca' }}>
-              <button className="cpn-row" onClick={() => setShowCPON(!showCPON)} style={{ width:'100%', padding:'13px 16px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
+              <button className="cpn-row" onClick={() => setShowCPON(!showCPON)} style={{ width:'100%', padding:'14px 16px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
                 <div style={{ width:40, height:40, borderRadius:12, background:'#fef2f2', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flexShrink:0, border:'1px solid #fecaca' }}>
                   <span style={{ color:'#dc2626', fontWeight:800, fontSize:11, lineHeight:1 }}>CPON</span>
                   <span style={{ color:'#dc2626', fontSize:8, opacity:.7 }}>Post-natal</span>
@@ -346,17 +349,21 @@ export default function GrossessePage() {
             </div>
 
             {SIGNES.map((s,i)=>(
-              <div key={i} style={{ background:'white', borderRadius:14, padding:'14px', boxShadow:'0 1px 6px rgba(0,0,0,0.05)', borderLeft:`4px solid ${s.color}` }}>
-                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-                  <div style={{ width:36, height:36, borderRadius:11, background:s.color+'15', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{s.icon}</div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:700, color:s.color, fontSize:13 }}>{s.titre}</div>
-                    <span style={{ background:s.color, color:'white', borderRadius:6, padding:'1px 8px', fontSize:9, fontWeight:700 }}>{s.niveau}</span>
+              <div key={i} style={{ background:'white', borderRadius:16, padding:'0', boxShadow:'0 2px 12px rgba(0,0,0,0.07)', overflow:'hidden', borderLeft:`4px solid ${s.color}` }}>
+                <div style={{ padding:'14px 14px 0 14px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                    <div style={{ width:42, height:42, borderRadius:12, background:s.color+'18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>{s.icon}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:800, color:'#1a1a1a', fontSize:14 }}>{s.titre}</div>
+                      <span style={{ background:s.color, color:'white', borderRadius:6, padding:'2px 9px', fontSize:9, fontWeight:700, letterSpacing:.3 }}>{s.niveau}</span>
+                    </div>
                   </div>
+                  <p style={{ color:'#555', fontSize:12, margin:'0 0 4px', lineHeight:1.6 }}>{s.desc}</p>
+                  <p style={{ color:'#888', fontSize:11, margin:'0 0 0', fontStyle:'italic', lineHeight:1.5 }}>→ {s.cause}</p>
                 </div>
-                <p style={{ color:'#444', fontSize:12, margin:'0 0 4px', lineHeight:1.5 }}>{s.desc}</p>
-                <p style={{ color:'#777', fontSize:11, margin:'0 0 6px', fontStyle:'italic' }}>→ {s.cause}</p>
-                <p style={{ color:s.color, fontSize:12, fontWeight:700, margin:0 }}>{s.action}</p>
+                <div style={{ background:s.color+'12', padding:'10px 14px', marginTop:10, borderTop:`1px solid ${s.color}20` }}>
+                  <p style={{ color:s.color, fontSize:12, fontWeight:800, margin:0 }}>{s.action}</p>
+                </div>
               </div>
             ))}
 
@@ -380,7 +387,7 @@ export default function GrossessePage() {
 
             <p style={{ color:'#15803d', fontWeight:700, fontSize:13, margin:'4px 0 0' }}>✅ Aliments à privilégier</p>
             {ALIMENTS_OK.map((g,i)=>(
-              <div key={i} style={{ background:'white', borderRadius:14, padding:'12px 14px', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              <div key={i} style={{ background:'white', borderRadius:16, padding:'14px 16px', boxShadow:'0 2px 10px rgba(0,0,0,0.06)', border:'1px solid #f0ebe3' }}>
                 <p style={{ fontWeight:700, color:'#0d4a3a', fontSize:13, margin:'0 0 8px' }}>{g.cat}</p>
                 {g.items.map((item,j)=>(
                   <div key={j} style={{ display:'flex', gap:8, marginBottom:4 }}>
@@ -540,11 +547,11 @@ export default function GrossessePage() {
       </div>
 
       {/* BOTTOM NAV */}
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #f0ebe3', display:'flex', padding:'8px 0 10px', boxShadow:'0 -2px 12px rgba(0,0,0,0.06)', zIndex:50 }}>
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'white', borderTop:'1px solid #f0ebe3', display:'flex', padding:'6px 8px 12px', boxShadow:'0 -4px 20px rgba(0,0,0,0.08)', zIndex:50 }}>
         {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id as any)} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:2, padding:'3px 0', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#c2690a':'#c4b5a0', fontWeight:tab===t.id?700:400 }}>
-            <span style={{ fontSize:18 }}>{t.icon}</span>
-            <span style={{ fontSize:9 }}>{t.label}</span>
+          <button key={t.id} onClick={()=>setTab(t.id as any)} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding:'6px 4px', border:'none', borderRadius:12, background:tab===t.id?'#fff3e0':'transparent', cursor:'pointer', color:tab===t.id?'#c2690a':'#bbb', fontWeight:tab===t.id?700:500, transition:'all .15s' }}>
+            <span style={{ fontSize:tab===t.id?22:19 }}>{t.icon}</span>
+            <span style={{ fontSize:10 }}>{t.label}</span>
           </button>
         ))}
       </div>
