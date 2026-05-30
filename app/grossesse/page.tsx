@@ -214,15 +214,7 @@ export default function GrossessePage() {
         </p>
       </div>
 
-      {/* TABS */}
-      <div style={{ background:'white', borderBottom:'2px solid #f0ebe3', display:'flex', position:'sticky', top:0, zIndex:40, overflowX:'auto' }}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id as any)} style={{ flex:1, minWidth:64, padding:'10px 4px', border:'none', background:'transparent', cursor:'pointer', color:tab===t.id?'#c2690a':'#9ca3af', fontWeight:tab===t.id?700:400, fontSize:10, borderBottom:tab===t.id?'2px solid #c2690a':'2px solid transparent', display:'flex', flexDirection:'column', alignItems:'center', gap:2, transition:'all .15s', marginBottom:-2 }}>
-            <span style={{ fontSize:18 }}>{t.icon}</span>
-            <span>{t.label}</span>
-          </button>
-        ))}
-      </div>
+
 
       <div style={{ maxWidth:560, margin:'0 auto', padding:'14px 14px' }}>
 
